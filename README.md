@@ -1,10 +1,4 @@
-# vue speech streaming
-[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=C9L4PNA5WH3LW)
-> A Vue2 Performing Streaming Speech Recognition with Google Cloud Speech on Progressive Web App
-
-<p align="center">
-  <img src ="https://i.imgur.com/HD07Rj9.gif" />
-</p>
+# Gist Speech Interface
 
 ## Authentication
 1. Visit the [Google Developers Console](https://console.developers.google.com/project)
@@ -17,8 +11,9 @@
 ## Config
 After at Authentication done getting the json file and insert At folder/file ``speech-websocket/app.js``
 ``` bash
-const speech = Speech({
-   keyFilename: '' // insert this file json here.
+const speechClient = new speech.SpeechClient({
+    ...,
+    keyFilename: '../gist-google-speech.json' // path to the json file
 });
 ```
 
@@ -26,13 +21,13 @@ const speech = Speech({
 
 ``` bash
 # Git Clone Project
-git clone git@github.com:aofdev/vue-speech-streaming.git
+git clone git@github.com:CanHCI-Project/Gist.git
 
 # Cd project
-cd vue-speech-streaming
+cd Gist
 
 # install dependencies project
-npm install || yarn install
+npm install
 
 ```
 
@@ -51,18 +46,13 @@ npm install
 
 ``` bash
 # run websocket 
-node app
+npm i -g nodemon
+nodemon app
 
 # run project app
-npm run dev || yarn dev
+npm run dev
 
 # build for production with minification and to build Progressive Web Apps
-npm run build || yarn build
+npm run build
 
 ```
-
-## Other related projects
-### Synchronous Speech Recognition
-> returns the recognized text for short audio (less than ~1 minute) in the response as soon as it is processed  [vue-pwa-speech](https://github.com/aofdev/vue-pwa-speech) 
-
-
