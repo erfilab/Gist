@@ -1,7 +1,9 @@
 <template>
     <v-touch tag="span"
              v-on:doubletap="doubleTapText"
+             v-on:singletap="singleTapText"
              :id="this.id"
+             style="background-color: #E0E0E0"
     >
         {{ this.block }}
     </v-touch>
@@ -21,13 +23,17 @@ export default {
 
     methods: {
         doubleTapText: function (event) {
-            event.target.style.backgroundColor = "yellow"
-            this.$store.commit('select_text')  // selected = true
-            this.$store.commit('add_element', event.target)
+            event.target.style.backgroundColor = "yellow";
+            this.$store.commit('select_text');  // selected = true
+            this.$store.commit('add_element', event.target);
         },
-        // singleTapText: function () {
-        //     console.log("you've tapped!")
-        // },
+
+        // move the cursor
+        singleTapText: function (event) {
+            const cursor_ele = document.getElementById("my_cursor");
+            cursor_ele.parentNode.removeChild(cursor_ele);
+            event.target.parentNode.insertBefore(cursor_ele, event.target.nextElementSibling);
+        },
     },
 
     // mounted() {

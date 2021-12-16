@@ -9,7 +9,7 @@
   * If you want to generate a new service account key for an existing service account, click on **Generate new JSON key** and download the JSON key file.
 
 ## Config
-After at Authentication done getting the json file and insert At folder/file ``speech-websocket/app.js``
+After at Authentication done getting the json file and insert At folder/file ``/Gist``
 ``` bash
 const speechClient = new speech.SpeechClient({
     ...,
@@ -50,7 +50,7 @@ npm i -g nodemon
 nodemon app
 
 # run project app
-npm run dev
+npm run serve
 
 # build for production with minification and to build Progressive Web Apps
 npm run build

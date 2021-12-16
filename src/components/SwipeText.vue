@@ -90,11 +90,11 @@ export default {
 
 .card {
     width: 100%;
-    background-color: #E0E0E0;
+    background-color: #C5E1A5;
     margin: 10px 0;
 }
 
 .card-content {
-    padding: 0.5rem;
+    //padding: 0.5rem;
 }
 </style>
