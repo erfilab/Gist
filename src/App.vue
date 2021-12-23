@@ -97,7 +97,7 @@ export default {
     watch: {
         // change the color of the cancel button
         selected_val() {
-            if (this.$store.state.selected === false) {
+            if (this.$store.state.selected === false && !this.$store.state.selected_elements.length) {
                 this.cancelButtonColor = "grey";
                 // remove the background color of the selected text
                 this.$store.state.selected_elements.forEach((ele) => {
@@ -105,7 +105,8 @@ export default {
                     ele.style.backgroundColor = "#E0E0E0";
                 });
                 this.$store.commit("clear_element");
-            } else {
+            }
+            else {
                 this.cancelButtonColor = "red";
             }
         },
@@ -159,6 +160,7 @@ export default {
     methods: {
         deselect: function () {
             this.$store.commit("deselect_text"); // selected = false
+            this.$store.commit('clear_element');
         },
         pressSpeak: function () {
             this.speakButtonColor = "green";

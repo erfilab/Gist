@@ -25,6 +25,9 @@ export default new Vuex.Store({
         add_element(state, ele) {
             state.selected_elements.push(ele)
         },
+        remove_element(state) {
+            state.selected_elements.pop(0)
+        },
         clear_element(state) {
             state.selected_elements = []
         }
