@@ -44,7 +44,9 @@
         <v-touch id="to_modify_area" style="display: none">
             <SwipeText/>
         </v-touch>
-        <div id="speaking_area" style="display: none"></div>
+        <div id="speaking_area" style="display: none; min-height: 20px">
+            <SemanticBlock semantic_block="" semantic_id="transcribed_text"/>
+        </div>
         <!-- <div id="speaking_area" v-if="voice2text.length > 0" >
                 {{voice2text}}
             </div> -->
@@ -53,6 +55,7 @@
 
 <script>
 import SemanticText from "@/components/SemanticText";
+import SemanticBlock from "@/components/SemanticBlock";
 import SwipeText from "@/components/SwipeText";
 import MyCursor from "@/components/MyCursor";
 
@@ -77,6 +80,7 @@ export default {
     }),
 
     components: {
+        SemanticBlock,
         MyCursor,
         SemanticText,
         SwipeText,
@@ -136,12 +140,9 @@ export default {
                 // the speaking area
                 const speaking_area = document.getElementById("speaking_area");
                 speaking_area.style.removeProperty("display");
-                speaking_area.style.backgroundColor = "#E0E0E0";
-                speaking_area.style.marginBottom = "10px";
-                speaking_area.style.minHeight = "20px";
+                // speaking_area.style.marginBottom = "10px";
+                // speaking_area.style.minHeight = "20px";
                 speaking_area.style.width = "100%";
-                // speaking_area.style.padding = "0.5rem";
-                speaking_area.innerHTML = this.voice2text;
                 divParent.appendChild(to_modify_area);
                 divParent.appendChild(speaking_area);
             }
@@ -152,8 +153,8 @@ export default {
         },
 
         voice2text_val() {
-            const speaking_area = document.getElementById("speaking_area");
-            speaking_area.innerHTML = this.voice2text;
+            const transcribed_text = document.getElementById("transcribed_text");
+            transcribed_text.innerHTML = this.voice2text;
         },
     },
 

@@ -91,7 +91,7 @@ export default {
 .card {
     width: 100%;
     background-color: #C5E1A5;
-    margin: 10px 0;
+    //margin: 10px 0;
 }
 
 .card-content {
