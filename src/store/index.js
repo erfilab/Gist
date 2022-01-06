@@ -8,6 +8,7 @@ export default new Vuex.Store({
         selected: false,
         isSpeaking: false,
         selected_elements: [],
+        cursor_ele_loc: null,
     },
     mutations: {
         select_text(state) {
@@ -30,7 +31,10 @@ export default new Vuex.Store({
         },
         clear_element(state) {
             state.selected_elements = []
-        }
+        },
+        set_cursor_ele_loc(state, ele_loc) {
+            state.cursor_ele_loc = ele_loc
+        },
     },
     actions: {
     },

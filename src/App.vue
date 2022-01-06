@@ -5,7 +5,7 @@
                 <v-toolbar-title style="margin-right: 20px"> Blurt-Ed</v-toolbar-title>
             </v-app-bar>
 
-            <v-main style="margin: 20px 40px 80px 40px; position: relative;">
+            <v-main style="margin: 20px 40px 80px 40px; position: relative;" id="main">
                 <SemanticText :semantic_text="this.text"></SemanticText>
                 <MyCursor id="my_cursor" />
             </v-main>
@@ -44,18 +44,13 @@
         <v-touch id="to_modify_area" style="display: none">
             <SwipeText/>
         </v-touch>
-        <div id="speaking_area" style="display: none; min-height: 20px">
-            <SemanticBlock semantic_block="" semantic_id="transcribed_text"/>
+        <div id="speaking_area" style="display: none; width: 100%">
         </div>
-        <!-- <div id="speaking_area" v-if="voice2text.length > 0" >
-                {{voice2text}}
-            </div> -->
     </v-app>
 </template>
 
 <script>
 import SemanticText from "@/components/SemanticText";
-import SemanticBlock from "@/components/SemanticBlock";
 import SwipeText from "@/components/SwipeText";
 import MyCursor from "@/components/MyCursor";
 
@@ -80,7 +75,7 @@ export default {
     }),
 
     components: {
-        SemanticBlock,
+        // SemanticBlock,
         MyCursor,
         SemanticText,
         SwipeText,
@@ -101,7 +96,7 @@ export default {
     watch: {
         // change the color of the cancel button
         selected_val() {
-            if (this.$store.state.selected === false && !this.$store.state.selected_elements.length) {
+            if (this.$store.state.selected === false) {
                 this.cancelButtonColor = "grey";
                 // remove the background color of the selected text
                 this.$store.state.selected_elements.forEach((ele) => {
@@ -117,53 +112,60 @@ export default {
 
         isSpeaking_val() {
             // when the user wants to replace the selected words
-            // make a <div> for the selected elements
-            if (this.$store.state.selected && this.$store.state.isSpeaking) {
-                const to_modify_area = document.getElementById("to_modify_area");
-                to_modify_area.style.removeProperty("display");
-                // find the inserted location
-                const firstElement = this.$store.state.selected_elements[0];
-                firstElement.parentNode.insertBefore(
-                    to_modify_area,
-                    firstElement.nextElementSibling
-                );
-                this.$store.state.selected_elements.forEach((ele) => {
-                    ele.style.display = "none";
-                });
-
-                // add a speaking area for inserted text
-                const divParent = document.createElement("div");
-                to_modify_area.parentNode.insertBefore(
-                    divParent,
-                    to_modify_area.nextElementSibling
-                );
+            if (this.$store.state.isSpeaking) {
                 // the speaking area
                 const speaking_area = document.getElementById("speaking_area");
                 speaking_area.style.removeProperty("display");
-                // speaking_area.style.marginBottom = "10px";
-                // speaking_area.style.minHeight = "20px";
-                speaking_area.style.width = "100%";
-                divParent.appendChild(to_modify_area);
-                divParent.appendChild(speaking_area);
-            }
-            // when the user deletes something and then speaks
-            if (!this.$store.state.selected && this.$store.state.isSpeaking) {
-                console.log("find your cursor");
+                const to_modify_area = document.getElementById("to_modify_area");
+
+                if (this.$store.state.selected) {
+                    to_modify_area.style.removeProperty("display");
+                    // find the inserted location
+                    const cursorElement = this.$store.state.cursor_ele_loc;
+                    cursorElement.parentNode.insertBefore(
+                        to_modify_area,
+                        cursorElement.nextElementSibling
+                    );
+                    this.$store.state.selected_elements.forEach((ele) => {
+                        // ele.style.display = "none";
+                        ele.parentNode.removeChild(ele)
+                    });
+
+                    to_modify_area.parentNode.insertBefore(speaking_area, to_modify_area.nextElementSibling)
+                }
+                else {
+                    to_modify_area.style.display = "none"
+                    const cursorElement = this.$store.state.cursor_ele_loc;
+                    cursorElement.parentNode.insertBefore(
+                        speaking_area,
+                        cursorElement.nextElementSibling
+                    );
+                }
             }
         },
 
         voice2text_val() {
-            const transcribed_text = document.getElementById("transcribed_text");
-            transcribed_text.innerHTML = this.voice2text;
+            const speaking_area = document.getElementById("speaking_area");
+            // speaking_area.innerHTML = this.voice2text
+            if (speaking_area.lastElementChild) {
+                while (speaking_area.lastElementChild) {  // remove all the children first
+                    speaking_area.removeChild(speaking_area.lastElementChild);
+                }
+            }
+
+            let newSemanticText = document.createElement('semantic-text-transcribed');
+            newSemanticText.setAttribute("semantic_text", this.voice2text);
+            speaking_area.appendChild(newSemanticText)
         },
     },
 
     methods: {
         deselect: function () {
             this.$store.commit("deselect_text"); // selected = false
-            this.$store.commit('clear_element');
         },
         pressSpeak: function () {
+            this.voice2text = ""
+
             this.speakButtonColor = "green";
             this.$store.commit("start_speak");
 
@@ -210,6 +212,21 @@ export default {
                 audioInput = null;
                 globalStream = null;
             });
+
+            const speaking_area = document.getElementById("speaking_area");
+            while (speaking_area.lastElementChild) {  // remove all the children
+                speaking_area.removeChild(speaking_area.lastElementChild);
+            }
+
+            let newSemanticText = document.createElement('semantic-text-transcribed');
+            newSemanticText.setAttribute("semantic_text", this.voice2text);
+
+            speaking_area.parentNode.insertBefore(
+                newSemanticText,
+                speaking_area.nextElementSibling
+            );
+            speaking_area.style.display = "none";
+            this.$store.commit('set_cursor_ele_loc', newSemanticText)
         },
         deleteText: function () {
             if (this.$store.state.selected) {
@@ -280,5 +297,16 @@ export default {
         // socket.emit("leaveRoom", "default_room_name");
         socket.disconnect();
     },
+
+    // mounted() {
+        // const cursor = document.getElementById("my_cursor")
+        // let newSemanticText = document.createElement('semantic-text-transcribed');
+        // newSemanticText.setAttribute("semantic_text", "voice.2text");
+        // cursor.parentNode.insertBefore(newSemanticText, cursor.nextElementSibling)
+
+        // const mainDiv = document.getElementById("main")
+        // let newCursor = document.createElement('my-cursor');
+        // mainDiv.appendChild(newCursor)
+    // }
 };
 </script>

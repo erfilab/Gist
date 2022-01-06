@@ -11,7 +11,3 @@ export default {
     name: "MyCursor"
 }
 </script>
-
-<style scoped>
-
-</style>
