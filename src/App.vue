@@ -66,6 +66,7 @@ export default {
 
     data: () => ({
         text: "Once upon a time, there was a king; who used to wear a single horned crown. He had a lavish palace, three beautiful wives, and seven children; all well qualified in their respective fields. The king was reaching the retirement age, so he asked his elder son to lead his empire so that he could undergo seclusion. Now, his Elder Son, Jonathan had set other plans for himself. So he turned down his father’s offer. Jonathan was a nature lover; and he wished to live in a thatched house within the deepest parts of the jungle. The king was disheartened; but he accepted Jonathan’s plea. He asked Jonathan’s immediate junior brother Sharlie to handle the loads of the throne. Sharlie accepted; but on a clause – whenever Jonathan would change his mind, Sharlie would return his throne to him. ",
+        // text: "one. two. four.",
         cancelButtonColor: "grey",
         speakButtonColor: "grey",
         voice2text: "",
@@ -127,7 +128,7 @@ export default {
                         cursorElement.nextElementSibling
                     );
                     this.$store.state.selected_elements.forEach((ele) => {
-                        // ele.style.display = "none";
+                        ele.style.display = "none";
                         ele.parentNode.removeChild(ele)
                     });
 
@@ -146,16 +147,16 @@ export default {
 
         voice2text_val() {
             const speaking_area = document.getElementById("speaking_area");
-            // speaking_area.innerHTML = this.voice2text
-            if (speaking_area.lastElementChild) {
-                while (speaking_area.lastElementChild) {  // remove all the children first
-                    speaking_area.removeChild(speaking_area.lastElementChild);
-                }
-            }
-
-            let newSemanticText = document.createElement('semantic-text-transcribed');
-            newSemanticText.setAttribute("semantic_text", this.voice2text);
-            speaking_area.appendChild(newSemanticText)
+            speaking_area.innerHTML = this.voice2text
+            // if (speaking_area.lastElementChild) {
+            //     while (speaking_area.lastElementChild) {  // remove all the children first
+            //         speaking_area.removeChild(speaking_area.lastElementChild);
+            //     }
+            // }
+            //
+            // let newSemanticText = document.createElement('semantic-text-transcribed');
+            // newSemanticText.setAttribute("semantic_text", this.voice2text);
+            // speaking_area.appendChild(newSemanticText)
         },
     },
 
@@ -164,8 +165,6 @@ export default {
             this.$store.commit("deselect_text"); // selected = false
         },
         pressSpeak: function () {
-            this.voice2text = ""
-
             this.speakButtonColor = "green";
             this.$store.commit("start_speak");
 
@@ -213,20 +212,9 @@ export default {
                 globalStream = null;
             });
 
+            this.$store.commit('set_new_semantic_content', this.voice2text);
             const speaking_area = document.getElementById("speaking_area");
-            while (speaking_area.lastElementChild) {  // remove all the children
-                speaking_area.removeChild(speaking_area.lastElementChild);
-            }
-
-            let newSemanticText = document.createElement('semantic-text-transcribed');
-            newSemanticText.setAttribute("semantic_text", this.voice2text);
-
-            speaking_area.parentNode.insertBefore(
-                newSemanticText,
-                speaking_area.nextElementSibling
-            );
             speaking_area.style.display = "none";
-            this.$store.commit('set_cursor_ele_loc', newSemanticText)
         },
         deleteText: function () {
             if (this.$store.state.selected) {
@@ -298,15 +286,5 @@ export default {
         socket.disconnect();
     },
 
-    // mounted() {
-        // const cursor = document.getElementById("my_cursor")
-        // let newSemanticText = document.createElement('semantic-text-transcribed');
-        // newSemanticText.setAttribute("semantic_text", "voice.2text");
-        // cursor.parentNode.insertBefore(newSemanticText, cursor.nextElementSibling)
-
-        // const mainDiv = document.getElementById("main")
-        // let newCursor = document.createElement('my-cursor');
-        // mainDiv.appendChild(newCursor)
-    // }
 };
 </script>

@@ -11,6 +11,7 @@
                     // down: (e) => swipeEvent(e)
                    }"
                  :id="this.id"
+                 :data-index="this.semantic_index"
                  style="background-color: #E0E0E0"
         >
             {{ this.block }}
@@ -27,13 +28,13 @@ let myTimeInterval;
 export default {
     store,
     name: "SemanticBlock",
-    props: ['semantic_block', 'semantic_id'],
+    props: ['semantic_block', 'semantic_id', 'semantic_index'],
 
     data() {
         return {
             block: this.semantic_block,    // 把传过来的值赋值给新的变量
             id: this.semantic_id,
-
+            index: this.semantic_index,
             // drag event
             dragging: false,
             currentTapEvent: null,
@@ -52,9 +53,8 @@ export default {
 
         // move the cursor
         singleTapText: function (event) {
-            // this.$store.commit('set_cursor_ele_loc',
-            //     event.target.nextElementSibling ? event.target.nextElementSibling : event.target)
             this.$store.commit('set_cursor_ele_loc', event.target.nextElementSibling);
+            this.$store.commit('update_current_index', event.target.dataset.index);
 
             const cursor_ele = document.getElementById("my_cursor");
             // cursor_ele.parentNode.removeChild(cursor_ele);
