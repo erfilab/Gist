@@ -71,12 +71,12 @@ export default {
 
             while (i < list.length + this.semantic_block.length) {
                 newList.push({
-                    text: this.semantic_block[i - currentIndex].text,
-                    id: this.semantic_block[i - currentIndex].id,
+                    text: this.semantic_block[i - list.length].text,
+                    id: this.semantic_block[i - list.length].id,
                     index: i,
                     key: this.uuid()
                 })
-                i++;
+              i++;
             }
             this.semantic_block = newList;
             // console.log(this.semantic_block)
