@@ -61,7 +61,8 @@ export default {
             event.target.parentNode.insertBefore(cursor_ele, event.target.nextElementSibling.nextElementSibling);
 
             this.currentTimeAfterTap = 0
-            if (myTimeInterval) clearInterval(myTimeInterval)
+            if (myTimeInterval)
+                clearInterval(myTimeInterval)
             myTimeInterval = setInterval(this.timer, 500)
             this.currentTapEvent = event;
         },
@@ -84,33 +85,34 @@ export default {
                 this.$store.commit('select_text')
                 this.$store.commit('add_element', this.currentTapEvent.target)
                 this.currentTapEvent = e
-                this.currentTapTarget = e.target.nextSibling
+                // this.currentTapTarget = e.target.nextSibling
+                this.currentTapTarget = e.target.parentNode.nextElementSibling.firstChild
                 clearInterval(myTimeInterval)
             }
         },
         draggingHandler(e) {
             if (this.currentTapTarget && this.dragging && (e.touchmoveY - this.currentTapEvent.touchmoveY) > 25) {
-                console.log('Drag Down', e.touchmoveY - this.previousTouchMoveY)
-                this.currentTapTarget = this.currentTapTarget.nextSibling
+                // console.log('Drag Down', e.touchmoveY - this.previousTouchMoveY)
+                // this.currentTapTarget = this.currentTapTarget.nextSibling
                 this.currentTapTarget.style.backgroundColor = "yellow";
                 this.$store.commit('select_text');
                 this.$store.commit('add_element', this.currentTapTarget);
-
+                this.currentTapTarget = this.currentTapTarget.parentNode.nextElementSibling.firstChild
                 this.currentTapEvent = e
-            } else if (this.currentTapTarget && this.dragging && (e.touchmoveY - this.currentTapEvent.touchmoveY) < -20) {
-                console.log('Drag Up', e.touchmoveY - this.currentTapEvent.touchmoveY)
+            }
+            else if (this.currentTapTarget && this.dragging && (e.touchmoveY - this.currentTapEvent.touchmoveY) < -20) {
+                // console.log('Drag Up', e.touchmoveY - this.currentTapEvent.touchmoveY)
                 this.currentTapTarget.style.backgroundColor = "#E0E0E0";
                 this.$store.commit('deselect_text');
                 this.$store.commit('remove_element');
-                this.currentTapTarget = this.currentTapTarget.previousSibling
-
+                this.currentTapTarget = this.currentTapTarget.parentNode.previousElementSibling.firstChild
                 this.currentTapEvent = e
             }
             this.previousTouchMoveY = e.touchmoveY
         },
-        endDrag(e) {
+        endDrag() {
             if (this.dragging) {
-                console.log('End', e.target.innerHTML)
+                // console.log('End', e.target.innerHTML)
                 this.dragging = false
                 this.currentTapEvent = null
                 this.currentTimeAfterTap = 0

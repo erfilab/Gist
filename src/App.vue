@@ -218,9 +218,16 @@ export default {
         },
         deleteText: function () {
             if (this.$store.state.selected) {
-                const parentNode = this.$store.state.selected_elements[0].parentNode;
+                // move the cursor to the next sibling of the last element in the list
+                const select_count = this.$store.state.selected_elements.length;
+                const cursor_ele = document.getElementById("my_cursor");
+                const lastEle = this.$store.state.selected_elements[select_count - 1];
+                lastEle.parentNode.nextElementSibling.insertBefore(cursor_ele,
+                    lastEle.parentNode.nextElementSibling.firstChild.nextSibling.nextSibling)
+
+                const parentNode = this.$store.state.selected_elements[0].parentNode.parentNode;
                 this.$store.state.selected_elements.forEach((ele) => {
-                    parentNode.removeChild(ele);
+                    parentNode.removeChild(ele.parentNode);
                 });
                 this.$store.commit("clear_element");
                 this.$store.commit("deselect_text");
