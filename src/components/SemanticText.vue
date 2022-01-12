@@ -60,12 +60,14 @@ export default {
             }
 
             list.forEach(value => {
+                const id = this.uuid()
                 newList.push({
                     text: value,
-                    id: this.uuid(),
+                    id: id,
                     index: i,
                     key: this.uuid()
                 })
+                this.$store.commit('set_cursor_ele_loc_id', id)
                 i++;
             })
 

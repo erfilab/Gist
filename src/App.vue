@@ -160,6 +160,18 @@ export default {
         },
     },
 
+    updated() {
+        // set cursor next to the newest sentence
+        if (this.$store.state.cursor_ele_loc_id !== "") {
+            const target = document.getElementById(this.$store.state.cursor_ele_loc_id)
+            this.$store.commit('set_cursor_ele_loc', target.nextElementSibling);
+            this.$store.commit('update_current_index', target.dataset.index);
+
+            const cursor_ele = document.getElementById("my_cursor");
+            target.parentNode.insertBefore(cursor_ele, target.nextElementSibling.nextElementSibling);
+        }
+    },
+
     methods: {
         deselect: function () {
             this.$store.commit("deselect_text"); // selected = false
@@ -215,6 +227,7 @@ export default {
             this.$store.commit('set_new_semantic_content', this.voice2text);
             const speaking_area = document.getElementById("speaking_area");
             speaking_area.style.display = "none";
+            speaking_area.innerHTML = "";
         },
         deleteText: function () {
             if (this.$store.state.selected) {

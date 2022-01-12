@@ -10,6 +10,7 @@ export default new Vuex.Store({
         isSpeaking: false,
         selected_elements: [],
         cursor_ele_loc: null,
+        cursor_ele_loc_id: "",
         new_semantic_content: "",
         current_block_index: 0,
     },
@@ -39,6 +40,9 @@ export default new Vuex.Store({
         },
         set_cursor_ele_loc(state, ele_loc) {
             state.cursor_ele_loc = ele_loc
+        },
+        set_cursor_ele_loc_id(state, ele_loc_id) {
+            state.cursor_ele_loc_id = ele_loc_id
         },
         set_new_semantic_content(state, newContent) {
             state.new_semantic_content = newContent
