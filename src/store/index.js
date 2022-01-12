@@ -31,6 +31,8 @@ export default new Vuex.Store({
         },
         remove_element(state) {
             state.selected_elements.pop()
+            if (state.selected_elements.length === 0)
+                state.selected = false
         },
         clear_element(state) {
             state.selected_elements = []

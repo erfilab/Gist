@@ -91,21 +91,27 @@ export default {
             }
         },
         draggingHandler(e) {
-            if (this.currentTapTarget && this.dragging && (e.touchmoveY - this.currentTapEvent.touchmoveY) > 25) {
+            if (this.currentTapTarget &&
+                this.dragging &&
+                (e.touchmoveY - this.currentTapEvent.touchmoveY) > 25
+            ) {
                 // console.log('Drag Down', e.touchmoveY - this.previousTouchMoveY)
-                // this.currentTapTarget = this.currentTapTarget.nextSibling
                 this.currentTapTarget.style.backgroundColor = "yellow";
                 this.$store.commit('select_text');
                 this.$store.commit('add_element', this.currentTapTarget);
                 this.currentTapTarget = this.currentTapTarget.parentNode.nextElementSibling.firstChild
                 this.currentTapEvent = e
             }
-            else if (this.currentTapTarget && this.dragging && (e.touchmoveY - this.currentTapEvent.touchmoveY) < -20) {
+            else if (this.currentTapTarget &&
+                this.dragging &&
+                (e.touchmoveY - this.currentTapEvent.touchmoveY) < -20 &&
+                this.$store.state.selected_elements.length > 0
+            ) {
                 // console.log('Drag Up', e.touchmoveY - this.currentTapEvent.touchmoveY)
-                this.currentTapTarget.style.backgroundColor = "#E0E0E0";
-                this.$store.commit('deselect_text');
-                this.$store.commit('remove_element');
                 this.currentTapTarget = this.currentTapTarget.parentNode.previousElementSibling.firstChild
+                this.currentTapTarget.style.backgroundColor = "#E0E0E0";
+                // this.$store.commit('deselect_text');
+                this.$store.commit('remove_element');
                 this.currentTapEvent = e
             }
             this.previousTouchMoveY = e.touchmoveY
