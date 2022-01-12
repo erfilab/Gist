@@ -67,6 +67,7 @@ export default {
                     index: i,
                     key: this.uuid()
                 })
+                // if (i === currentIndex + list.length - 1)
                 this.$store.commit('set_cursor_ele_loc_id', id)
                 i++;
             })

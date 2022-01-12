@@ -45,20 +45,25 @@ export default {
     },
 
     methods: {
-        doubleTapText: function (event) {
-            event.target.style.backgroundColor = "yellow";
-            this.$store.commit('select_text');  // selected = true
-            this.$store.commit('add_element', event.target);
-        },
-
-        // move the cursor
-        singleTapText: function (event) {
+        set_cursor_location(event) {
             this.$store.commit('set_cursor_ele_loc', event.target.nextElementSibling);
             this.$store.commit('update_current_index', event.target.dataset.index);
 
             const cursor_ele = document.getElementById("my_cursor");
             // cursor_ele.parentNode.removeChild(cursor_ele);
             event.target.parentNode.insertBefore(cursor_ele, event.target.nextElementSibling.nextElementSibling);
+        },
+
+        doubleTapText: function (event) {
+            event.target.style.backgroundColor = "yellow";
+            this.$store.commit('select_text');  // selected = true
+            this.$store.commit('add_element', event.target);
+            // this.set_cursor_location(event);
+        },
+
+        // move the cursor
+        singleTapText: function (event) {
+            this.set_cursor_location(event);
 
             this.currentTimeAfterTap = 0
             if (myTimeInterval)

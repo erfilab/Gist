@@ -70,6 +70,7 @@ export default {
         cancelButtonColor: "grey",
         speakButtonColor: "grey",
         voice2text: "",
+        if_cursor_ele_loc_id_updated: false,
 
         resultError: false,
         speechLang: "en-US",
@@ -92,6 +93,9 @@ export default {
         voice2text_val() {
             return this.voice2text;
         },
+        cursor_ele_loc_id() {
+            return this.$store.state.cursor_ele_loc_id;
+        }
     },
 
     watch: {
@@ -158,17 +162,24 @@ export default {
             // newSemanticText.setAttribute("semantic_text", this.voice2text);
             // speaking_area.appendChild(newSemanticText)
         },
+
+        // set cursor next to the newest sentence
+        cursor_ele_loc_id() {
+            this.if_cursor_ele_loc_id_updated = true
+        }
     },
 
     updated() {
-        // set cursor next to the newest sentence
-        if (this.$store.state.cursor_ele_loc_id !== "") {
-            const target = document.getElementById(this.$store.state.cursor_ele_loc_id)
-            this.$store.commit('set_cursor_ele_loc', target.nextElementSibling);
-            this.$store.commit('update_current_index', target.dataset.index);
+        if (this.if_cursor_ele_loc_id_updated) {
+            if (this.$store.state.cursor_ele_loc_id !== "") {
+                const target = document.getElementById(this.$store.state.cursor_ele_loc_id)
+                this.$store.commit('set_cursor_ele_loc', target.nextElementSibling);
+                this.$store.commit('update_current_index', target.dataset.index);
 
-            const cursor_ele = document.getElementById("my_cursor");
-            target.parentNode.insertBefore(cursor_ele, target.nextElementSibling.nextElementSibling);
+                const cursor_ele = document.getElementById("my_cursor");
+                target.parentNode.insertBefore(cursor_ele, target.nextElementSibling.nextElementSibling);
+            }
+            this.if_cursor_ele_loc_id_updated = false;
         }
     },
 
@@ -179,6 +190,11 @@ export default {
         pressSpeak: function () {
             this.speakButtonColor = "green";
             this.$store.commit("start_speak");
+
+            if (!this.$store.state.selected) {
+                const to_modify_area = document.getElementById("to_modify_area");
+                to_modify_area.style.display = "none"
+            }
 
             socket.emit("startRecording");
             audioContext = window.AudioContext || window.webkitAudioContext;
@@ -208,6 +224,7 @@ export default {
                 .then(handleSuccess);
         },
         releaseSpeak: function () {
+            this.$store.commit("deselect_text"); // selected = false
             this.speakButtonColor = "grey";
             this.$store.commit("stop_speak");
 
