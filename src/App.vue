@@ -304,7 +304,7 @@ export default {
         this.$store.commit("clear_element");
 
         // speech recognition socket innitialization
-        socket = io("http://localhost:3000/" + nowDay);
+        socket = io( `${process.env.NODE_ENV==='production'? 'https://ryanyen2.tech/' : 'http://localhost:3000/'}` + nowDay);
 
         socket.on("INTERIM_TRANSCRIPT", (data) => {
             //   console.log("interim:", data);
