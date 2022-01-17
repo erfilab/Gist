@@ -1,17 +1,28 @@
 
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 
 const routes = require('express').Router();
-routes.get('/', (req, res) => {
-    res.status(200).json({ message: 'Connected to API' })
-})
+// routes.get('/', (req, res) => {
+//     res.status(200).json({ message: 'Connected to API' })
+// })
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use('/', routes);
+
+
+app.use(
+    express.static(
+        path.join(
+            __dirname,
+            `${process.env.NODE_ENV === 'development' ? '.' : '..'}/dist`
+        )
+    )
+);
 
 const HOST = process.env.HOST || 'localhost';
 const PORT = process.env.PORT || 3000;
