@@ -93,13 +93,15 @@ function startRecognitionStream(room) {
         .streamingRecognize(request)
         .on('error', console.error)
         .on('data', data => {
-            const transcript = data.results[0].alternatives[0].transcript;
-            // console.log(`Interim: ${transcript}`);
-            namespaces.in(room).emit("INTERIM_TRANSCRIPT", transcript);
+            namespaces.in(room).emit("TRANSCRIPT", data);
+            // const transcript = data.results[0].alternatives[0].transcript;
+
+            // // console.log(`Interim: ${transcript}`);
+            // namespaces.in(room).emit("INTERIM_TRANSCRIPT", transcript);
 
             if (data.results[0] && data.results[0].isFinal) {
-                console.log(`Final: ${transcript}`);
-                namespaces.in(room).emit('FINAL_TRANSCRIPT', transcript);
+                // console.log(`Final: ${transcript}`);
+                // namespaces.in(room).emit('FINAL_TRANSCRIPT', transcript);
                 stopRecognitionStream();
                 startRecognitionStream(room);
                 console.log('Restarted Stream on Serverside');

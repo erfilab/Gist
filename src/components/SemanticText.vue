@@ -50,7 +50,8 @@ export default {
         new_content_val() {
             const newContent = this.$store.state.new_semantic_content;
             let currentIndex = this.$store.state.current_block_index;
-            const list = newContent.split(/(.*?[.,;?])/g).filter(i => i && i.trim())
+            // console.log('New content: ', newContent)
+            const list = (newContent.join(' ')).split(/(.*?[.,;?])/g).filter(i => i && i.trim())
 
             let newList = [];
             let i = 0;
