@@ -9,6 +9,7 @@ export default new Vuex.Store({
         selected: false,
         isSpeaking: false,
         selected_elements: [],
+        selected_elements_length: 0,
         cursor_ele_loc: null,
         cursor_ele_loc_id: "",
         new_semantic_content: "",
@@ -37,6 +38,9 @@ export default new Vuex.Store({
         },
         clear_element(state) {
             state.selected_elements = []
+        },
+        set_selected_elements_length(state, length) {
+            state.selected_elements_length = length
         },
         set_cursor_ele_loc(state, ele_loc) {
             state.cursor_ele_loc = ele_loc

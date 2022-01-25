@@ -123,7 +123,12 @@ export default {
         },
         endDrag() {
             if (this.dragging) {
-                // console.log('End', e.target.innerHTML)
+                // console.log('End', this.currentTapTarget.innerHTML)
+                // const lastDraggedEle = this.currentTapTarget.parentNode.previousElementSibling.firstChild;
+                // this.$store.commit('set_cursor_ele_loc', lastDraggedEle)
+                // const cursor_ele = document.getElementById("my_cursor");
+                // lastDraggedEle.parentNode.insertBefore(cursor_ele, lastDraggedEle.nextElementSibling.nextElementSibling);
+
                 this.dragging = false
                 this.currentTapEvent = null
                 this.currentTimeAfterTap = 0

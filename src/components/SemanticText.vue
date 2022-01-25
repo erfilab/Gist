@@ -73,11 +73,15 @@ export default {
                 i++;
             })
 
+            // console.log(this.$store.state.selected_elements_length)
+            const length = this.$store.state.selected_elements_length
+            i += length - 1
+
             while (i < list.length + this.semantic_block.length) {
                 newList.push({
                     text: this.semantic_block[i - list.length].text,
                     id: this.semantic_block[i - list.length].id,
-                    index: i,
+                    index: i - length + 1,
                     key: this.uuid()
                 })
               i++;
