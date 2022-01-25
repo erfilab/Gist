@@ -14,6 +14,7 @@ export default new Vuex.Store({
         cursor_ele_loc_id: "",
         new_semantic_content: "",
         current_block_index: 0,
+        delete_old_content: false,
     },
     mutations: {
         select_text(state) {
@@ -54,6 +55,9 @@ export default new Vuex.Store({
         update_current_index(state, newIndex) {
             state.current_block_index = newIndex
         },
+        set_delete_old_content(state, status) {
+            state.delete_old_content = status
+        }
     },
     actions: {
     },
