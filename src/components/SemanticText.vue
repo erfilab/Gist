@@ -1,5 +1,5 @@
 <template>
-    <div style="display: inline">
+    <div style="display: inline; line-height: 1.8em">
         <SemanticBlock
             v-for="(block_i) in semantic_block"
             :key="block_i.key"

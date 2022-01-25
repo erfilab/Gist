@@ -66,7 +66,7 @@
       <v-touch id="to_modify_area" style="display: none">
         <SwipeText />
       </v-touch>
-      <div id="speaking_area" style="display: none; width: 100%" />
+      <div id="speaking_area" style="display: none; width: 100%; font-size: large" />
     </v-app>
   </div>
 </template>

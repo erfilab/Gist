@@ -1,6 +1,6 @@
 <template>
     <v-img contain src="../assets/cursor.gif"
-           style="width: 2px; height: auto;
+           style="width: 0.16rem; height: auto;
            vertical-align: bottom; margin-bottom:4px;
            display: inline-block">
     </v-img>

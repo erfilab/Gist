@@ -84,7 +84,7 @@ export default {
 .swipeout-action {
     display: flex;
     align-items: center;
-    padding: 0 2rem;
+    padding: 0 1.6rem;
     cursor: pointer;
 }
 
@@ -96,5 +96,6 @@ export default {
 
 .card-content {
     //padding: 0.5rem;
+  font-size: large;
 }
 </style>

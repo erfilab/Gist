@@ -12,7 +12,7 @@
                    }"
                  :id="this.id"
                  :data-index="this.semantic_index"
-                 style="background-color: #E0E0E0"
+                 style="background-color: #E0E0E0; font-size: large"
         >
             {{ this.block }}
         </v-touch>
