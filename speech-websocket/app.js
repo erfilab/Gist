@@ -49,7 +49,7 @@ const request = {
         sampleRateHertz: sampleRateHertz,
         languageCode: languageCode,
         profanityFilter: false,
-        enableWordTimeOffsets: true,
+        enableWordTimeOffsets: false,
         enableAutomaticPunctuation: true,
         speechContexts: [{
             phrases: ["stop", "respeak", "again"]

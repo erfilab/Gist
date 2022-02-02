@@ -7,28 +7,13 @@
     id="swipe_text"
   >
     <template v-slot="{ item }">
-      <!-- item is the corresponding object from the array -->
-      <!-- index is clearly the index -->
-      <!-- revealLeft is method which toggles the left side -->
-      <!-- revealRight is method which toggles the right side -->
-      <!-- close is method which closes an opened side -->
       <div class="card-content">
-        <!-- style content how ever you like -->
         <p style="margin-bottom: 0">{{ item }}</p>
       </div>
     </template>
-    <!-- right swipe side template and v-slot:right"{ item }" is the item clearly -->
-    <!-- remove if you dont wanna have right swipe side  -->
     <template v-slot:right="{ item }">
       <div class="swipeout-action red" @click="remove(item)">
-        <!-- place icon here or what ever you want -->
         <i class="fa fa-trash"></i>
-      </div>
-    </template>
-    <template v-slot:empty>
-      <div>
-        <!-- change mockSwipeList to an empty array to see this slot in action  -->
-        list is empty ( filtered or just empty )
       </div>
     </template>
   </swipe-list>
@@ -37,6 +22,7 @@
 <script>
 import { SwipeList } from "vue-swipe-actions";
 import "vue-swipe-actions/dist/vue-swipe-actions.css";
+import { mapGetters } from 'vuex';
 
 export default {
   name: "SwipeText",
@@ -52,17 +38,15 @@ export default {
   },
 
   computed: {
-    isSpeaking_val() {
-      return this.$store.state.isSpeaking;
-    },
+    ...mapGetters(["selectedElements"]),
   },
 
   watch: {
-    isSpeaking_val() {
-      if (this.$store.state.isSpeaking) {
+    selectedElements() {
+      if (this.selectedElements.length > 0) {
         this.mockSwipeList = [];
         let content = "";
-        this.$store.state.selected_elements.forEach((ele) => {
+        this.selectedElements.forEach((ele) => {
           content += ele.innerHTML;
         });
         this.mockSwipeList.push(content);
@@ -89,9 +73,9 @@ export default {
         this.$store.state.selected_elements.forEach((ele) => {
           parentNode.removeChild(ele.parentNode);
         });
-        this.$store.commit("set_delete_old_content", true);
+        // this.$store.commit("set_delete_old_content", true);
         this.$store.commit("clear_element");
-        this.$store.commit("deselect_text");
+        // this.$store.commit("deselect_text");
       }
     },
   },

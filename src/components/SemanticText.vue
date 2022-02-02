@@ -1,11 +1,11 @@
 <template>
   <div style="display: inline; line-height: 2em">
     <SemanticBlock
-      v-for="block_i in semantic_block"
+      v-for="(block_i, index) in semanticList"
       :key="block_i.key"
       :semantic_block="block_i.text"
       :semantic_id="block_i.id"
-      :semantic_index="block_i.index"
+      :semantic_index="index"
     >
     </SemanticBlock>
   </div>
@@ -14,6 +14,7 @@
 <script>
 import SemanticBlock from "@/components/SemanticBlock";
 import store from "../store/";
+import { mapGetters } from "vuex";
 
 export default {
   store,
@@ -26,13 +27,12 @@ export default {
 
   data() {
     return {
-      text: this.semantic_text, // 把传过来的值赋值给新的变量
-      semantic_block: [],
+      text: this.semantic_text,
     };
   },
 
   methods: {
-    uuid: function () {
+    uuid() {
       return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
         /[xy]/g,
         function (c) {
@@ -45,100 +45,74 @@ export default {
   },
 
   computed: {
-    new_content_val() {
-      return this.$store.state.new_semantic_content;
-    },
-    delete_old_content_val() {
-      return this.$store.state.delete_old_content;
-    },
+    ...mapGetters(["newSemanticContent", "semanticList", "previous_length"]),
   },
 
   watch: {
-    delete_old_content_val() {
-      if (this.$store.state.delete_old_content) {
-        const semantic_list = this.text
-          .split(/(.*?[.,;?])/g)
-          .filter((i) => i && i.trim());
+    newSemanticContent() {
+      if (this.newSemanticContent && this.newSemanticContent.length) {
+        const currentIndex = this.$store.state.current_block_index;
+        // console.log("New content: ", this.newSemanticContent, currentIndex);
 
-        let index = 0;
-        semantic_list.forEach((element) => {
-          this.semantic_block.push({
-            text: element,
-            id: this.uuid(),
-            index: index,
-            key: this.uuid(),
-          });
-          index++;
-
-          this.$store.commit("set_delete_old_content", false);
-        });
-      }
-    },
-    new_content_val() {
-      const newContent = this.$store.state.new_semantic_content;
-      if (newContent) {
-        let currentIndex = this.$store.state.current_block_index;
-        // console.log('New content: ', newContent)
-        const list = newContent
+        const insertedList = this.newSemanticContent
           .join(" ")
           .split(/(.*?[.,;?])/g)
-          .filter((i) => i && i.trim());
-
-        let newList = [];
-        let i = 0;
-        while (i <= currentIndex) {
-          newList.push(this.semantic_block[i]);
-          i++;
-        }
-
-        list.forEach((value) => {
-          const id = this.uuid();
-          newList.push({
-            text: value,
-            id: id,
-            index: i,
-            key: this.uuid(),
+          .filter((i) => i && i.trim())
+          .map((val) => {
+            return {
+              key: this.uuid(),
+              text: val,
+              id: this.uuid(),
+            };
           });
-          // if (i === currentIndex + list.length - 1)
-          this.$store.commit("set_cursor_ele_loc_id", id);
-          i++;
-        });
 
-        // console.log(this.$store.state.selected_elements_length)
-        const length = this.$store.state.selected_elements_length;
-        i += length - 1;
+        let semantic_block = this.semanticList;
+        semantic_block.splice(
+            parseInt(currentIndex) + 1,
+            this.previous_length,
+            ...insertedList
+          );
+        this.$store.commit("set_semanticList", semantic_block);
+        this.$store.commit("set_previous_length", insertedList.length);
 
-        while (i < list.length + this.semantic_block.length) {
-          newList.push({
-            text: this.semantic_block[i - list.length].text,
-            id: this.semantic_block[i - list.length].id,
-            index: i - length + 1,
-            key: this.uuid(),
-          });
-          i++;
+        let re_index = this.previous_length;
+        const cursor_ele = document.getElementById("my_cursor");
+        const speaking_area = document.getElementById("speaking_area_lower");
+        speaking_area.style.removeProperty("display");
+        let targetSibling = cursor_ele.parentNode.nextElementSibling;
+
+        while (re_index) {
+          targetSibling = targetSibling
+            ? targetSibling.nextElementSibling
+            : null;
+          re_index--;
         }
-        this.semantic_block = newList;
-        // console.log(this.semantic_block)
+        if (targetSibling) {
+          targetSibling.parentNode.insertBefore(cursor_ele, targetSibling);
+          cursor_ele.parentNode.insertBefore(
+            speaking_area,
+            cursor_ele.nextElementSibling
+          );
+        }
       }
     },
   },
 
   mounted() {
-    // this.semantic_block = this.text.split(/(?=[.,;])/g)
     const semantic_list = this.text
       .split(/(.*?[.,;?])/g)
       .filter((i) => i && i.trim());
 
-    let index = 0;
-    semantic_list.forEach((element) => {
-      this.semantic_block.push({
-        text: element,
-        id: this.uuid(),
-        index: index,
-        key: this.uuid(),
-      });
-      index++;
-    });
+    this.$store.commit(
+      "set_semanticList",
+      semantic_list.map((element) => {
+        return {
+          text: element,
+          id: this.uuid(),
+          key: this.uuid(),
+        };
+      })
+    );
   },
 };
 </script>

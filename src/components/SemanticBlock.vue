@@ -3,12 +3,11 @@
     <v-touch
       tag="span"
       ref="hammer"
-      v-on:doubletap="doubleTapText"
       v-on:singletap="singleTapText"
       v-touch="{
         start: (e) => startDrag(e),
         end: (e) => endDrag(e),
-        move: (e) => draggingHandler(e),
+        move: (e) => startDraggingHandler(e),
         // down: (e) => swipeEvent(e)
       }"
       :id="this.id"
@@ -23,6 +22,7 @@
 
 <script>
 import store from "../store/";
+import { mapGetters } from "vuex";
 
 let myTimeInterval;
 
@@ -37,63 +37,64 @@ export default {
       id: this.semantic_id,
       index: this.semantic_index,
       // drag event
-      dragging: false,
+      startDragging: false,
+      isDragging: false,
       currentTapEvent: null,
       currentTapTarget: null,
       currentTimeAfterTap: 0,
       previousTouchMoveY: 0,
     };
   },
+  computed: {
+    ...mapGetters(["selectedNo", "semanticList"]),
+  },
 
   methods: {
-    set_cursor_location(event) {
-      this.$store.commit("set_cursor_ele_loc", event.target.nextElementSibling);
-      this.$store.commit("update_current_index", event.target.dataset.index);
+    set_cursor_location(target) {
+      this.$store.commit("set_cursor_ele_loc", target.nextElementSibling);
+      this.$store.commit("update_current_index", target.dataset.index);
 
       const cursor_ele = document.getElementById("my_cursor");
       // cursor_ele.parentNode.removeChild(cursor_ele);
-      event.target.parentNode.insertBefore(
+      target.parentNode.insertBefore(
         cursor_ele,
-        event.target.nextElementSibling.nextElementSibling
+        target.nextElementSibling.nextElementSibling
       );
     },
 
-    doubleTapText: function (event) {
-      event.target.style.backgroundColor = "yellow";
-      this.$store.commit("select_text"); // selected = true
-      this.$store.commit("add_element", event.target);
-      // this.set_cursor_location(event);
-    },
-
     // move the cursor
-    singleTapText: function (event) {
-      this.set_cursor_location(event);
+    singleTapText(event) {
+      this.$store.commit("clear_element");
+      
+      // TODO what if tap to the same place
+      this.$store.commit("change_location_speaking");
+      this.set_cursor_location(event.target);
 
       this.currentTimeAfterTap = 0;
       if (myTimeInterval) clearInterval(myTimeInterval);
-      myTimeInterval = setInterval(this.timer, 500);
+      myTimeInterval = setInterval(this.timer, 400);
+
       this.currentTapEvent = event;
+      const speaking_area = document.getElementById("speaking_area");
+      speaking_area.style.display = "content";
+      const cursorElement = this.$store.state.cursor_ele_loc;
+      cursorElement.parentNode.insertBefore(
+        speaking_area,
+        cursorElement.nextElementSibling
+      );
     },
 
     timer() {
       this.currentTimeAfterTap += 1;
     },
-    // swipeEvent(event) {
-    //   if (this.currentTapTarget && this.currentTimeAfterTap <= 2) {
-    //     this.currentTapTarget.style.backgroundColor = "yellow";
-    //     this.$store.commit('select_text');  // selected = true
-    //     this.$store.commit('add_element', this.currentTapTarget);
-    //     console.log('Down: ', event, '\nTarget', this.currentTapTarget)
-    //   }
-    // },
     startDrag(e) {
-      if (this.currentTapEvent && this.currentTimeAfterTap <= 2) {
-        this.dragging = true;
+      if (this.currentTapEvent) {
+        this.$store.commit("clear_element");
+        this.startDragging = true;
         this.currentTapEvent.target.style.backgroundColor = "yellow";
-        this.$store.commit("select_text");
         this.$store.commit("add_element", this.currentTapEvent.target);
         this.currentTapEvent = e;
-        // this.currentTapTarget = e.target.nextSibling
+
         if (e.target.parentNode.nextElementSibling) {
           this.currentTapTarget =
             e.target.parentNode.nextElementSibling.firstChild;
@@ -101,23 +102,20 @@ export default {
         clearInterval(myTimeInterval);
       }
     },
-    draggingHandler(e) {
+    startDraggingHandler(e) {
       if (
         this.currentTapTarget &&
-        this.dragging &&
+        this.startDragging &&
         e.touchmoveY - this.currentTapEvent.touchmoveY > 25
       ) {
-        // console.log('Drag Down', e.touchmoveY - this.previousTouchMoveY)
-
+        this.isDragging = true;
         if (
           this.currentTapTarget.innerText.length &&
           (!this.$store.state.selected_elements.length ||
-           this.currentTapTarget.innerText !==
-            this.$store.state.selected_elements.slice(-1)[0].innerText
-            )
+            this.currentTapTarget.innerText !==
+              this.$store.state.selected_elements.slice(-1)[0].innerText)
         ) {
           this.currentTapTarget.style.backgroundColor = "yellow";
-          this.$store.commit("select_text");
           this.$store.commit("add_element", this.currentTapTarget);
         }
 
@@ -129,31 +127,42 @@ export default {
         // this.currentTapTarget = this.currentTapTarget.parentNode.nextElementSibling.firstChild
       } else if (
         this.currentTapTarget &&
-        this.dragging &&
+        this.startDragging &&
         e.touchmoveY - this.currentTapEvent.touchmoveY < -20 &&
         this.$store.state.selected_elements.length > 0
       ) {
-        // console.log('Drag Up', e.touchmoveY - this.currentTapEvent.touchmoveY)
         this.currentTapTarget =
           this.currentTapTarget.parentNode.previousElementSibling.firstChild;
         this.currentTapTarget.style.backgroundColor = "#E0E0E0";
-        // this.$store.commit('deselect_text');
         this.$store.commit("remove_element");
         this.currentTapEvent = e;
       }
       this.previousTouchMoveY = e.touchmoveY;
     },
-    endDrag() {
-      if (this.dragging) {
-        // console.log('End', this.currentTapTarget.innerHTML)
-        // const lastDraggedEle = this.currentTapTarget.parentNode.previousElementSibling.firstChild;
-        // this.$store.commit('set_cursor_ele_loc', lastDraggedEle)
-        // const cursor_ele = document.getElementById("my_cursor");
-        // lastDraggedEle.parentNode.insertBefore(cursor_ele, lastDraggedEle.nextElementSibling.nextElementSibling);
+    endDrag(event) {
+      if (this.startDragging) {
+        this.set_cursor_location(
+          this.currentTapTarget.parentNode.nextElementSibling
+            ? this.currentTapTarget.parentNode.previousElementSibling.firstChild
+            : this.currentTapTarget
+        );
 
-        this.dragging = false;
+        // TODO set the timer of doble tap
+        if (!this.isDragging) {
+          this.$store.commit("clear_element");
+          event.target.style.backgroundColor = "yellow";
+          this.$store.commit("add_selectedNo", 1);
+          this.$store.commit("add_element", event.target);
+
+          // this.set_cursor_location(event);
+          this.currentTimeAfterTap = 0;
+          this.currentTapEvent = event;
+        }
+        this.$store.commit("add_selectedNo", 1);
+        this.startDragging = false;
         this.currentTapEvent = null;
         this.currentTimeAfterTap = 0;
+        this.currentTapTarget = null;
       }
     },
   },
