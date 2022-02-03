@@ -77,11 +77,11 @@ export default {
 
         let re_index = this.previous_length;
         const cursor_ele = document.getElementById("my_cursor");
-        const speaking_area = document.getElementById("speaking_area_lower");
-        speaking_area.style.removeProperty("display");
+        // const speaking_area = document.getElementById("speaking_area_lower");
+        // speaking_area.style.removeProperty("display");
         let targetSibling = cursor_ele.parentNode.nextElementSibling;
 
-        while (re_index) {
+        while (re_index > 1) {
           targetSibling = targetSibling
             ? targetSibling.nextElementSibling
             : null;
@@ -89,10 +89,10 @@ export default {
         }
         if (targetSibling) {
           targetSibling.parentNode.insertBefore(cursor_ele, targetSibling);
-          cursor_ele.parentNode.insertBefore(
-            speaking_area,
-            cursor_ele.nextElementSibling
-          );
+          // cursor_ele.parentNode.insertBefore(
+          //   speaking_area,
+          //   cursor_ele.nextElementSibling.nextElementSibling
+          // );
         }
       }
     },

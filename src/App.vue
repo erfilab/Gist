@@ -22,7 +22,6 @@
         absolute
         bottom
         left
-        small
         style="position: fixed; bottom: 15px; left: 5px"
         @click.end="toggleFullScreen"
       >
@@ -70,7 +69,7 @@
         style="display: none; width: 100%; font-size: large"
       ></div>
 
-      <hr id="speaking_area_lower" style="display: none; margin: 5px 0" />
+      <!-- <hr id="speaking_area_lower" style="display: none; margin: 5px 0" /> -->
     </v-app>
   </div>
 </template>
@@ -91,7 +90,7 @@ export default {
   name: "App",
 
   data: () => ({
-    text: "Once upon a time, there was a king; who used to wear a single horned crown. He had a lavish palace, three beautiful wives, and seven children; all well qualified in their respective fields. The king was reaching the retirement age, so he asked his elder son to lead his empire so that he could undergo seclusion. Now, his Elder Son, Jonathan had set other plans for himself. So he turned down his father’s offer. Jonathan was a nature lover; and he wished to live in a thatched house within the deepest parts of the jungle. The king was disheartened; but he accepted Jonathan’s plea. He asked Jonathan’s immediate junior brother Sharlie to handle the loads of the throne. Sharlie accepted; but on a clause – whenever Jonathan would change his mind, Sharlie would return his throne to him.",
+    text: "Once upon a time, there was a king; who used to wear a single horned crown. He had a lavish palace, three beautiful wives, and seven children; all well qualified in their respective fields. The king was reaching the retirement age, so he asked his elder son to lead his empire so that he could undergo seclusion. Now, his Elder Son, Jonathan had set other plans for himself. So he turned down his father’s offer. Jonathan was a nature lover; and he wished to live in a thatched house within the deepest parts of the jungle. The king was disheartened; but he accepted Jonathan’s plea. He asked Jonathan’s immediate junior brother Sharlie to handle the loads of the throne. Sharlie accepted; but on a clause – whenever Jonathan would change his mind, Sharlie would return his throne to him. Once upon a time, there was a king; who used to wear a single horned crown. He had a lavish palace, three beautiful wives, and seven children; all well qualified in their respective fields. The king was reaching the retirement age, so he asked his elder son to lead his empire so that he could undergo seclusion. Now, his Elder Son, Jonathan had set other plans for himself. So he turned down his father’s offer. Jonathan was a nature lover; and he wished to live in a thatched house within the deepest parts of the jungle. The king was disheartened; but he accepted Jonathan’s plea. He asked Jonathan’s immediate junior brother Sharlie to handle the loads of the throne. Sharlie accepted; but on a clause – whenever Jonathan would change his mind, Sharlie would return his throne to him",
     voice2text: "",
 
     resultError: false,
@@ -222,12 +221,10 @@ export default {
       const xUp = e.touches[0].clientX;
       this.xDiff = this.startX - xUp;
 
-      if (this.xDiff > 0) {
-        this.currentTarget.style.right = `${this.xDiff}px`;
-      }
+      this.currentTarget.style.right = `${this.xDiff}px`;
     },
     handleTouchEnd() {
-      if (this.xDiff > 200) {
+      if (this.xDiff > 180) {
         this.currentTarget.parentNode.removeChild(this.currentTarget);
         const removed_list = this.currentTarget.innerText
           .split(/(.*?[.,;?])/g)
@@ -240,6 +237,32 @@ export default {
           );
         });
         this.$store.commit("set_semanticList", temp_semanticList);
+        this.$store.commit("clear_element");
+      } else if (this.xDiff < -180) {
+        const insertedList = this.currentTarget.innerText
+          .split(/(.*?[.,;?])/g)
+          .filter((i) => i && i.trim())
+          .map((val) => {
+            return {
+              key: this.uuidv4(),
+              text: val,
+              id: this.uuidv4(),
+            };
+          });
+
+        const currentIndex =
+          this.currentTarget.parentNode.nextElementSibling.firstChild.getAttribute(
+            "data-index"
+          ) - insertedList.length;
+        this.currentTarget.parentNode.removeChild(this.currentTarget);
+
+        let semantic_block = this.semanticList;
+        semantic_block.splice(
+            parseInt(currentIndex) + 1,
+            0,
+            ...insertedList
+          );
+        this.$store.commit("set_semanticList", semantic_block);
         this.$store.commit("clear_element");
       } else {
         this.currentTarget.style.right = 0;
@@ -407,3 +430,9 @@ export default {
   },
 };
 </script>
+
+<style lang="scss">
+#app {
+  overflow-y: auto;
+}
+</style>
