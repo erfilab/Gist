@@ -1,15 +1,15 @@
 <template>
   <span>
     <span
-      @click.stop="singleTapText"
-      v-touch="{
-        //start: (e) => startDrag(e),
+        @click.stop="singleTapText"
+        v-touch="{
+        start: (e) => touchStart(e),
         //end: (e) => endDrag(e),
         //move: (e) => startDraggingHandler(e),
       }"
-      :id="this.id"
-      :data-index="this.semantic_index"
-      style="background-color: #e0e0e0; padding: 5px"
+        :id="this.id"
+        :data-index="this.semantic_index"
+        style="background-color: #e0e0e0; padding: 5px"
     >
       {{ this.block }}
     </span>
@@ -19,7 +19,7 @@
 
 <script>
 import store from "../store/";
-import { mapGetters } from "vuex";
+import {mapGetters} from "vuex";
 
 export default {
   store,
@@ -28,11 +28,12 @@ export default {
 
   data() {
     return {
-      block: this.semantic_block, // 把传过来的值赋值给新的变量
+      block: this.semantic_block,
       id: this.semantic_id,
       index: this.semantic_index,
       yDiff: 0,
       startY: 0,
+      clickTimer: null,
     };
   },
   computed: {
@@ -47,10 +48,28 @@ export default {
       const cursor_ele = document.getElementById("my_cursor");
       // cursor_ele.parentNode.removeChild(cursor_ele);
       target.parentNode.insertBefore(
-        cursor_ele,
-        target.nextElementSibling.nextElementSibling
+          cursor_ele,
+          target.nextElementSibling.nextElementSibling
       );
     },
+
+    // double tap event listener
+    touchStart: function (e) {
+      if (this.clickTimer === null) {
+        this.clickTimer = setTimeout(function () {
+          this.clickTimer = null;
+          // console.log("single");
+        }, 500)
+      } else {
+        clearTimeout(this.clickTimer);
+        this.clickTimer = null;
+        e.target.style.backgroundColor = "yellow";
+        this.$store.commit('add_element', e.target);
+        // this.set_cursor_location(e.target);
+        // console.log("double");
+      }
+    },
+
     singleTapText(e) {
       this.$store.commit("clear_element");
       this.$store.commit("change_location_speaking");
@@ -59,26 +78,26 @@ export default {
       speaking_area.style.display = "content";
       const cursorElement = this.$store.state.cursor_ele_loc;
       cursorElement.parentNode.insertBefore(
-        speaking_area,
-        cursorElement.nextElementSibling
+          speaking_area,
+          cursorElement.nextElementSibling
       );
 
       this.currentTapTarget = e.target;
       this.currentTapTarget.addEventListener(
-        "touchstart",
-        this.handleTouchStart,
-        false
+          "touchstart",
+          this.handleTouchStart,
+          false
       );
 
       this.currentTapTarget.addEventListener(
-        "touchmove",
-        this.handleTouchMove,
-        false
+          "touchmove",
+          this.handleTouchMove,
+          false
       );
       this.currentTapTarget.addEventListener(
-        "touchend",
-        this.handleTouchEnd,
-        false
+          "touchend",
+          this.handleTouchEnd,
+          false
       );
     },
     getTouches(e) {
@@ -96,15 +115,15 @@ export default {
       if (Math.abs(this.startY - yUp - this.yDiff) > 25) {
         if (this.startY - yUp > this.yDiff) {
           this.currentTapTarget =
-            this.currentTapTarget.parentNode.previousElementSibling.firstChild;
+              this.currentTapTarget.parentNode.previousElementSibling.firstChild;
           this.currentTapTarget.style.backgroundColor = "#E0E0E0";
           this.$store.commit("remove_element");
         } else {
           if (
-            this.currentTapTarget.innerText.length &&
-            (!this.$store.state.selected_elements.length ||
-              this.currentTapTarget.innerText !==
-                this.$store.state.selected_elements.slice(-1)[0].innerText)
+              this.currentTapTarget.innerText.length &&
+              (!this.$store.state.selected_elements.length ||
+                  this.currentTapTarget.innerText !==
+                  this.$store.state.selected_elements.slice(-1)[0].innerText)
           ) {
             this.currentTapTarget.style.backgroundColor = "yellow";
             this.$store.commit("add_element", this.currentTapTarget);
@@ -112,7 +131,7 @@ export default {
 
           if (this.currentTapTarget.parentNode.nextElementSibling) {
             this.currentTapTarget =
-              this.currentTapTarget.parentNode.nextElementSibling.firstChild;
+                this.currentTapTarget.parentNode.nextElementSibling.firstChild;
           }
         }
 
@@ -122,26 +141,26 @@ export default {
     handleTouchEnd() {
       document.getElementById('app').style.overflow = 'auto';
       this.currentTapTarget.removeEventListener(
-        "touchstart",
-        this.handleTouchStart,
-        true
+          "touchstart",
+          this.handleTouchStart,
+          true
       );
 
       this.currentTapTarget.removeEventListener(
-        "touchmove",
-        this.handleTouchMove,
-        true
+          "touchmove",
+          this.handleTouchMove,
+          true
       );
       this.currentTapTarget.removeEventListener(
-        "touchend",
-        this.handleTouchEnd,
-        true
+          "touchend",
+          this.handleTouchEnd,
+          true
       );
 
       this.set_cursor_location(
-        this.currentTapTarget.parentNode.nextElementSibling
-          ? this.currentTapTarget.parentNode.previousElementSibling.firstChild
-          : this.currentTapTarget
+          this.currentTapTarget.parentNode.nextElementSibling
+              ? this.currentTapTarget.parentNode.previousElementSibling.firstChild
+              : this.currentTapTarget
       );
 
       this.$store.commit("add_selectedNo", 1);
