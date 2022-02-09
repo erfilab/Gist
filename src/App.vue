@@ -132,12 +132,11 @@ export default {
         if (this.selectedElements.length > 0) {
           this.changeLocationAndSpeak();
           this.selectedElements.forEach((ele) => {
-
             ele.style.display = "none";
-            ele.nextElementSibling.style.display = "none";
+            if (ele.nextElementSibling)
+              ele.nextElementSibling.style.display = "none";
 
             if (ele.parentNode) {
-              // ele.parentNode.removeChild(ele.nextElementSibling);
               ele.parentNode.removeChild(ele);
             }
           });
@@ -244,8 +243,7 @@ export default {
         });
         this.$store.commit("set_semanticList", temp_semanticList);
         this.$store.commit("clear_element");
-      }
-      else if (this.xDiff < -180) {
+      } else if (this.xDiff < -180) {
         const insertedList = this.currentTarget.innerText
           .split(/(.*?[.,;?])/g)
           .filter((i) => i && i.trim())
@@ -264,11 +262,7 @@ export default {
         this.currentTarget.parentNode.removeChild(this.currentTarget);
 
         let semantic_block = this.semanticList;
-        semantic_block.splice(
-            parseInt(currentIndex) + 1,
-            0,
-            ...insertedList
-          );
+        semantic_block.splice(parseInt(currentIndex) + 1, 0, ...insertedList);
         this.$store.commit("set_semanticList", semantic_block);
         this.$store.commit("clear_element");
       } else {
