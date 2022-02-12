@@ -10,11 +10,10 @@ export default new Vuex.Store({
         selected_elements: [],
         
         semanticList: [],
-
-        cursor_ele_loc: null,
         new_semantic_content: "",
         previous_length: 0,
         current_block_index: 0,
+        current_target_block: null,
     },
     getters: {
         selectedElements: state => {
@@ -24,6 +23,7 @@ export default new Vuex.Store({
         selectedNo: state => state.selectedNo,
         semanticList: state => state.semanticList,
         previous_length: state => state.previous_length,
+        current_target_block: state => state.current_target_block,
     },
     mutations: {
         change_location_speaking(state) {
@@ -53,14 +53,12 @@ export default new Vuex.Store({
         clear_element(state) {
             state.selected_elements = []
         },
-
-        set_cursor_ele_loc(state, ele_loc) {
-            state.cursor_ele_loc = ele_loc
-        },
         update_current_index(state, newIndex) {
             state.current_block_index = newIndex
         },
-
+        update_current_target_block(state, newBlock) {
+            state.current_target_block = newBlock
+        },
     },
     actions: {},
     modules: {}

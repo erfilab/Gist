@@ -6,6 +6,7 @@
       :semantic_block="block_i.text"
       :semantic_id="block_i.id"
       :semantic_index="index"
+      :class="block_i.fadeIn? 'fadingEffect': ''"
     >
     </SemanticBlock>
   </div>
@@ -45,11 +46,11 @@ export default {
   },
 
   computed: {
-    ...mapGetters(["newSemanticContent", "semanticList", "previous_length"]),
+    ...mapGetters(["current_target_block", "newSemanticContent", "semanticList", "previous_length"]),
   },
 
   watch: {
-    newSemanticContent() {
+    async newSemanticContent() {
       if (this.newSemanticContent && this.newSemanticContent.length) {
         const currentIndex = this.$store.state.current_block_index;
         // console.log("New content: ", this.newSemanticContent, currentIndex);
@@ -63,6 +64,7 @@ export default {
               key: this.uuid(),
               text: val,
               id: this.uuid(),
+              fadeIn: false,
             };
           });
 
@@ -74,25 +76,32 @@ export default {
           );
         this.$store.commit("set_semanticList", semantic_block);
         this.$store.commit("set_previous_length", insertedList.length);
+        const speaking_area = document.getElementById('speaking_area_lower')
+        speaking_area.style.display = 'block'
 
-        let re_index = this.previous_length;
         const cursor_ele = document.getElementById("my_cursor");
-        // const speaking_area = document.getElementById("speaking_area_lower");
-        // speaking_area.style.removeProperty("display");
-        let targetSibling = cursor_ele.parentNode.nextElementSibling;
+        if (this.current_target_block && document.getElementById(this.current_target_block.id)) {
+          this.current_target_block.parentNode.insertBefore(
+            cursor_ele,
+            this.current_target_block
+          );
 
-        while (re_index > 1) {
-          targetSibling = targetSibling
-            ? targetSibling.nextElementSibling
-            : null;
-          re_index--;
+          this.current_target_block.parentNode.insertBefore(
+            speaking_area,
+            this.current_target_block
+          );
         }
-        if (targetSibling) {
-          targetSibling.parentNode.insertBefore(cursor_ele, targetSibling);
-          // cursor_ele.parentNode.insertBefore(
-          //   speaking_area,
-          //   cursor_ele.nextElementSibling.nextElementSibling
-          // );
+        else {
+          const inserted_target = document.getElementById('last-element')
+          inserted_target.parentNode.insertBefore(
+            cursor_ele,
+            inserted_target
+          );
+
+          inserted_target.parentNode.insertBefore(
+            speaking_area,
+            inserted_target
+          );
         }
       }
     },
@@ -110,6 +119,7 @@ export default {
           text: element,
           id: this.uuid(),
           key: this.uuid(),
+          fadeIn: true,
         };
       })
     );
@@ -117,3 +127,22 @@ export default {
 };
 </script>
 
+
+<style>
+.fadingEffect {
+  opacity: 1;
+  width: 100%;
+  animation: fadeInOpacity .2s ease-in alternate 1;
+}
+
+@keyframes fadeInOpacity {
+  0% {
+    opacity: 0;
+    width: 0%;
+  }
+  100% {
+    opacity: 1;
+    width: 100%;
+  }
+}
+</style>

@@ -43,16 +43,30 @@ export default {
   },
 
   methods: {
-    set_cursor_location(target) {
-      this.$store.commit("set_cursor_ele_loc", target.nextElementSibling);
-      this.$store.commit("update_current_index", target.dataset.index);
+    set_cursor_location(target, isMultiSelection) {
+      if (isMultiSelection) {
+        const cursor_ele = document.getElementById("my_cursor");
+        target.parentNode.insertBefore(cursor_ele, target);
+      } else {
+        const range = document.createRange();
+        range.selectNodeContents(target);
+        range.collapse(false);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        this.$store.commit("update_current_index", target.dataset.index);
+        let targetSibling = document.querySelector(
+          `[data-index="${parseInt(target.dataset.index) + 1}"]`
+        );
 
-      const cursor_ele = document.getElementById("my_cursor");
-      // cursor_ele.parentNode.removeChild(cursor_ele);
-      target.parentNode.insertBefore(
-        cursor_ele,
-        target.nextElementSibling.nextElementSibling
-      );
+        this.$store.commit("update_current_target_block", targetSibling);
+
+        const cursor_ele = document.getElementById("my_cursor");
+        sel.focusNode.parentNode.insertBefore(
+          cursor_ele,
+          sel.focusNode.nextElementSibling
+        );
+      }
     },
 
     // double tap event listener
@@ -75,16 +89,17 @@ export default {
     singleTapText(e) {
       this.$store.commit("clear_element");
       this.$store.commit("change_location_speaking");
-      this.set_cursor_location(e.target);
+      this.set_cursor_location(e.target, false);
       const speaking_area = document.getElementById("speaking_area");
-      speaking_area.style.display = "content";
-      const cursorElement = this.$store.state.cursor_ele_loc;
+      speaking_area.style.display = "contents";
+      const cursorElement = document.getElementById("my_cursor");
       cursorElement.parentNode.insertBefore(
         speaking_area,
         cursorElement.nextElementSibling
       );
 
       this.currentTapTarget = e.target;
+      console.log("single tap", this.currentTapTarget);
 
       this.currentTapTarget.addEventListener(
         "touchstart",
@@ -138,19 +153,23 @@ export default {
           this.currentTapTarget.style.backgroundColor = "#E0E0E0";
           this.$store.commit("remove_element");
         } else {
-          if (
-            this.currentTapTarget.innerText.length &&
-            (!this.$store.state.selected_elements.length ||
-              this.currentTapTarget.innerText !==
-                this.$store.state.selected_elements.slice(-1)[0].innerText)
-          ) {
-            this.currentTapTarget.style.backgroundColor = "yellow";
-            this.$store.commit("add_element", this.currentTapTarget);
-          }
+          if (this.currentTapTarget && this.currentTapTarget.tagName === "SPAN" && this.currentTapTarget.style.display !== "none") {
+            if (
+              this.currentTapTarget.innerText.length &&
+              (!this.$store.state.selected_elements.length ||
+                this.currentTapTarget.innerText !==
+                  this.$store.state.selected_elements.slice(-1)[0].innerText)
+            ) {
+              this.currentTapTarget.style.backgroundColor = "yellow";
+              this.$store.commit("add_element", this.currentTapTarget);
+            }
 
-          if (this.currentTapTarget.parentNode.nextElementSibling) {
-            this.currentTapTarget =
-              this.currentTapTarget.parentNode.nextElementSibling.firstChild;
+            if (this.currentTapTarget.parentNode.nextElementSibling && this.currentTapTarget.parentNode.nextElementSibling.innerText.length) {
+              this.currentTapTarget = this.currentTapTarget.parentNode.nextElementSibling.firstChild;
+            }
+          } else {
+            this.currentTapTarget = this.currentTapTarget.nextElementSibling? 
+            this.currentTapTarget.nextElementSibling : this.currentTapTarget;
           }
         }
 
@@ -175,24 +194,22 @@ export default {
         this.handleTouchEnd,
         true
       );
-
-      this.set_cursor_location(
-        this.currentTapTarget.parentNode.nextElementSibling
-          ? this.currentTapTarget.parentNode.previousElementSibling.firstChild
-          : this.currentTapTarget
+      this.$store.commit(
+        "update_current_index",
+        parseInt(this.currentTapTarget.dataset.index) - 1
       );
+      const targetSibling = document.querySelector(
+        `[data-index="${parseInt(this.currentTapTarget.dataset.index)}"]`
+      );
+      this.$store.commit("update_current_target_block", targetSibling);
 
+      this.set_cursor_location(this.currentTapTarget.parentNode, true);
       this.$store.commit("add_selectedNo", 1);
 
       this.startX = null;
       this.xDiff = 0;
       this.currentTapTarget = null;
     },
-  },
-
-  mounted() {
-    const ele = document.getElementById(this.id);
-    this.$store.commit("set_cursor_ele_loc", ele.nextElementSibling);
   },
 };
 </script>

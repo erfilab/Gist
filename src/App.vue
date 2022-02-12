@@ -13,6 +13,7 @@
         >
           <SemanticText :semantic_text="this.text"></SemanticText>
           <MyCursor id="my_cursor" />
+          <div id="last-element" />
         </v-main>
       </v-touch>
 
@@ -69,7 +70,7 @@
         style="display: none; width: 100%; font-size: large"
       ></div>
 
-      <!-- <hr id="speaking_area_lower" style="display: none; margin: 5px 0" /> -->
+      <hr id="speaking_area_lower" style="display: none; margin: 5px 0" />
     </v-app>
   </div>
 </template>
@@ -90,7 +91,7 @@ export default {
   name: "App",
 
   data: () => ({
-    text: "Once upon a time, there was a king; who used to wear a single horned crown. He had a lavish palace, three beautiful wives, and seven children; all well qualified in their respective fields. The king was reaching the retirement age, so he asked his elder son to lead his empire so that he could undergo seclusion. Now, his Elder Son, Jonathan had set other plans for himself. So he turned down his father’s offer. Jonathan was a nature lover; and he wished to live in a thatched house within the deepest parts of the jungle. The king was disheartened; but he accepted Jonathan’s plea. He asked Jonathan’s immediate junior brother Sharlie to handle the loads of the throne. Sharlie accepted; but on a clause – whenever Jonathan would change his mind, Sharlie would return his throne to him. Once upon a time, there was a king; who used to wear a single horned crown. He had a lavish palace, three beautiful wives, and seven children; all well qualified in their respective fields. The king was reaching the retirement age, so he asked his elder son to lead his empire so that he could undergo seclusion. Now, his Elder Son, Jonathan had set other plans for himself. So he turned down his father’s offer. Jonathan was a nature lover; and he wished to live in a thatched house within the deepest parts of the jungle. The king was disheartened; but he accepted Jonathan’s plea. He asked Jonathan’s immediate junior brother Sharlie to handle the loads of the throne. Sharlie accepted; but on a clause – whenever Jonathan would change his mind, Sharlie would return his throne to him",
+    text: "Once upon a time, there was a king; who used to wear a single horned crown. He had a lavish palace, three beautiful wives, and seven children; Once upon a time, there was a king; who used to wear a single horned crown. He had a lavish palace, three beautiful wives, and seven children;",
     voice2text: "",
 
     resultError: false,
@@ -131,14 +132,8 @@ export default {
       if (this.selectedNo >= 1) {
         if (this.selectedElements.length > 0) {
           this.changeLocationAndSpeak();
-          this.selectedElements.forEach((ele) => {
-            ele.style.display = "none";
-            if (ele.nextElementSibling)
-              ele.nextElementSibling.style.display = "none";
-
-            if (ele.parentNode) {
-              ele.parentNode.removeChild(ele);
-            }
+          this.selectedElements.forEach((i) => {
+            i.parentNode.removeChild(i);
           });
 
           const to_modify_area = document.getElementById("to-modify-area");
@@ -146,6 +141,11 @@ export default {
           clone_modify_area.setAttribute(
             "id",
             `to-modify-area-${this.selectedNo}`
+          );
+
+          clone_modify_area.setAttribute(
+            "start-index",
+            this.selectedElements[0].dataset.index
           );
 
           clone_modify_area.innerHTML = this.selectedElements
@@ -169,11 +169,10 @@ export default {
           );
 
           const speaking_area = document.getElementById("speaking_area");
-          const cursorElement = this.$store.state.cursor_ele_loc;
-
+          const cursorElement = document.getElementById("my_cursor");
           cursorElement.parentNode.insertBefore(
             clone_modify_area,
-            cursorElement.nextElementSibling
+            cursorElement
           );
           speaking_area.style.removeProperty("display");
 
@@ -227,6 +226,11 @@ export default {
       this.xDiff = this.startX - xUp;
 
       this.currentTarget.style.right = `${this.xDiff}px`;
+      if (this.xDiff > 0) {
+        this.currentTarget.style.backgroundColor = `rgb(${197 + this.xDiff}, ${
+          225 - this.xDiff
+        }, ${165 - this.xDiff})`;
+      }
     },
     handleTouchEnd() {
       if (this.xDiff > 180) {
@@ -238,7 +242,7 @@ export default {
         let temp_semanticList = this.semanticList;
         removed_list.forEach((i) => {
           temp_semanticList = temp_semanticList.filter(
-            (ele) => ele.content !== i
+            (ele) => ele.text !== i
           );
         });
         this.$store.commit("set_semanticList", temp_semanticList);
@@ -252,13 +256,12 @@ export default {
               key: this.uuidv4(),
               text: val,
               id: this.uuidv4(),
+              fadeIn: true,
             };
           });
-
-        const currentIndex =
-          this.currentTarget.parentNode.nextElementSibling.firstChild.getAttribute(
-            "data-index"
-          ) - insertedList.length;
+        const currentIndex = parseInt(
+          this.currentTarget.getAttribute("start-index")
+        );
         this.currentTarget.parentNode.removeChild(this.currentTarget);
 
         let semantic_block = this.semanticList;
@@ -267,6 +270,7 @@ export default {
         this.$store.commit("clear_element");
       } else {
         this.currentTarget.style.right = 0;
+        this.currentTarget.style.backgroundColor = "rgb(197, 225, 165)";
       }
 
       this.startX = null;
