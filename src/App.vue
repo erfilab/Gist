@@ -3,31 +3,31 @@
     <v-app style="position: relative">
       <v-touch>
         <v-main
-          style="
+            style="
             margin: 25px 20px 20px 20px;
             position: relative;
             text-align: justify;
             text-justify: inter-word;
           "
-          id="main"
+            id="main"
         >
           <SemanticText :semantic_text="this.text"></SemanticText>
-          <MyCursor id="my_cursor" />
-          <div id="last-element" />
+          <MyCursor id="my_cursor"/>
+          <div id="last-element"/>
         </v-main>
       </v-touch>
 
       <v-btn
-        fab
-        dark
-        absolute
-        bottom
-        left
-        style="position: fixed; bottom: 15px; left: 5px"
-        @click.end="toggleFullScreen"
+          fab
+          dark
+          absolute
+          bottom
+          left
+          style="position: fixed; bottom: 15px; left: 5px"
+          @click.end="toggleFullScreen"
       >
         <v-icon
-          >{{ isFullScreen ? "mdi-fullscreen-exit" : "mdi-fullscreen" }}
+        >{{ isFullScreen ? "mdi-fullscreen-exit" : "mdi-fullscreen" }}
         </v-icon>
       </v-btn>
 
@@ -43,21 +43,21 @@
         <v-icon>mdi-close</v-icon>
       </v-btn> -->
       <v-btn
-        :color="isStreaming ? 'green' : 'grey'"
-        fab
-        dark
-        absolute
-        bottom
-        right
-        style="position: fixed; bottom: 15px; right: 36px"
-        @click="isStreaming ? turnOffMic() : turnOnMic()"
+          :color="isStreaming ? 'green' : 'grey'"
+          fab
+          dark
+          absolute
+          bottom
+          right
+          style="position: fixed; bottom: 15px; right: 36px"
+          @click="isStreaming ? turnOffMic() : turnOnMic()"
       >
         <v-icon>mdi-microphone</v-icon>
       </v-btn>
 
       <span
-        id="to-modify-area"
-        style="
+          id="to-modify-area"
+          style="
           display: none;
           background-color: #c5e1a5;
           right: 0px;
@@ -66,11 +66,11 @@
       />
       <!-- <SwipeText /> -->
       <div
-        id="speaking_area"
-        style="display: none; width: 100%; font-size: large"
+          id="speaking_area"
+          style="display: none; width: 100%; font-size: large"
       ></div>
 
-      <hr id="speaking_area_lower" style="display: none; margin: 5px 0" />
+      <hr id="speaking_area_lower" style="display: none; margin: 5px 0"/>
     </v-app>
   </div>
 </template>
@@ -80,12 +80,12 @@ import SemanticText from "@/components/SemanticText";
 // import SwipeText from "@/components/SwipeText";
 import MyCursor from "@/components/MyCursor";
 
-import { io } from "socket.io-client";
+import {io} from "socket.io-client";
+import {mapGetters} from "vuex";
 
 const nowDay = new Date().toISOString().slice(0, 10);
 let socket = null;
 let context, processor, audioContext, globalStream, audioInput;
-import { mapGetters } from "vuex";
 
 export default {
   name: "App",
@@ -132,56 +132,61 @@ export default {
       if (this.selectedNo >= 1) {
         if (this.selectedElements.length > 0) {
           this.changeLocationAndSpeak();
-          this.selectedElements.forEach((i) => {
-            i.parentNode.removeChild(i);
-            // if (i.nextElementSibling) i.parentNode.removeChild(i.nextElementSibling);
-          });
 
           const to_modify_area = document.getElementById("to-modify-area");
           let clone_modify_area = to_modify_area.cloneNode(true);
           clone_modify_area.setAttribute(
-            "id",
-            `to-modify-area-${this.selectedNo}`
+              "id",
+              `to-modify-area-${this.selectedNo}`
           );
-
-          // clone_modify_area.setAttribute(
-          //   "start-index",
-          //   this.selectedElements[0].dataset.index
-          // );
 
           clone_modify_area.innerHTML = this.selectedElements
-            .map((ele) => ele.innerHTML)
-            .join(" ");
+              .map((ele) => ele.innerHTML)
+              .join(" ");
 
           clone_modify_area.addEventListener(
-            "touchstart",
-            this.handleTouchStart,
-            false
+              "touchstart",
+              this.handleTouchStart,
+              false
           );
           clone_modify_area.addEventListener(
-            "touchmove",
-            this.handleTouchMove,
-            false
+              "touchmove",
+              this.handleTouchMove,
+              false
           );
           clone_modify_area.addEventListener(
-            "touchend",
-            this.handleTouchEnd,
-            false
+              "touchend",
+              this.handleTouchEnd,
+              false
           );
 
           const speaking_area = document.getElementById("speaking_area");
           const cursorElement = document.getElementById("my_cursor");
           cursorElement.parentNode.insertBefore(
-            clone_modify_area,
-            cursorElement
+              clone_modify_area,
+              cursorElement
           );
           speaking_area.style.removeProperty("display");
 
           clone_modify_area.style.display = "block";
           clone_modify_area.parentNode.insertBefore(
-            speaking_area,
-            clone_modify_area.nextElementSibling
+              speaking_area,
+              clone_modify_area.nextElementSibling
           );
+
+          // remove selected blocks
+          this.selectedElements.forEach((i) => {
+            if (i.previousElementSibling && i.previousElementSibling.tagName === 'HR') {
+              const speaking_area = document.getElementById('speaking_area_lower')
+              const inserted_target = document.getElementById('last-element')
+              speaking_area.style.display = 'none'
+              inserted_target.parentNode.insertBefore(
+                  speaking_area,
+                  inserted_target
+              );
+            }
+            i.parentNode.parentNode.removeChild(i.parentNode)
+          });
         }
       }
     },
@@ -200,10 +205,10 @@ export default {
   methods: {
     uuidv4() {
       return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, (c) =>
-        (
-          c ^
-          (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))
-        ).toString(16)
+          (
+              c ^
+              (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))
+          ).toString(16)
       );
     },
     changeLocationAndSpeak() {
@@ -223,29 +228,53 @@ export default {
       this.$store.commit("clear_element");
       this.$store.commit("change_location_speaking");
 
-      let selectedSpanElement = this.currentTarget.nextElementSibling;
-      while (selectedSpanElement && selectedSpanElement.tagName !== "SPAN") {
-        selectedSpanElement = this.currentTarget.nextElementSibling;
+      let selectedSpanElement = null
+      let insertedIndex = 0
+      let targetSibling = null
+
+      const selectedList = this.currentTarget.innerText
+          .split(/(.*?[.,;?])/g)
+          .filter((i) => i && i.trim());
+
+      // check if is the last element
+      if (!this.currentTarget.nextElementSibling) {
+        // is the last element
+        selectedSpanElement = this.currentTarget.previousElementSibling.firstChild
+        insertedIndex = parseInt(selectedSpanElement.dataset.index) + selectedList.length
+        targetSibling = document.getElementById('last-element')
+        this.$store.commit("update_current_target_block", null);
+      } else {
+        if (this.currentTarget.nextElementSibling.tagName === 'DIV') {
+          if (this.currentTarget.nextElementSibling.nextElementSibling && this.currentTarget.nextElementSibling.nextElementSibling.firstChild.innerText.length > 1) {
+            selectedSpanElement = this.currentTarget.nextElementSibling.nextElementSibling.firstChild
+          }
+          else selectedSpanElement = this.currentTarget.nextElementSibling.nextElementSibling.nextElementSibling.firstChild
+        } else {
+          if (this.currentTarget.nextElementSibling && this.currentTarget.nextElementSibling.firstChild.innerText.length > 1) {
+            // select other green and come back
+            selectedSpanElement = this.currentTarget.nextElementSibling.firstChild
+          }
+          else selectedSpanElement = this.currentTarget.nextElementSibling.childNodes[2]
+        }
+
+        insertedIndex = parseInt(selectedSpanElement.dataset.index)
+        targetSibling = document.querySelector(
+            `[data-index="${insertedIndex}"]`
+        );
+        this.$store.commit("update_current_target_block", targetSibling);
       }
-
-      const insertedIndex =
-        parseInt(selectedSpanElement.firstChild.dataset.index) - 1;
-      const targetSibling = document.querySelector(
-        `[data-index="${insertedIndex + 1}"]`
-      );
-
-      this.$store.commit("update_current_target_block", targetSibling);
       this.$store.commit("update_current_index", insertedIndex);
+      // console.log('start', targetSibling, insertedIndex)
 
       const speaking_area = document.getElementById("speaking_area");
       speaking_area.style.display = "contents";
       const cursorElement = document.getElementById("my_cursor");
 
-      targetSibling.parentNode.insertBefore(cursorElement, targetSibling);
+      if (targetSibling) targetSibling.parentNode.insertBefore(cursorElement, targetSibling);
 
       cursorElement.parentNode.insertBefore(
-        speaking_area,
-        cursorElement.nextElementSibling
+          speaking_area,
+          cursorElement.nextElementSibling
       );
     },
     handleTouchMove(e) {
@@ -257,7 +286,7 @@ export default {
       this.currentTarget.style.right = `${this.xDiff}px`;
       if (this.xDiff > 0) {
         this.currentTarget.style.backgroundColor = `rgb(${197 + this.xDiff}, ${
-          225 - this.xDiff
+            225 - this.xDiff
         }, ${165 - this.xDiff})`;
       }
     },
@@ -265,8 +294,8 @@ export default {
       if (this.xDiff > 180) {
         this.currentTarget.parentNode.removeChild(this.currentTarget);
         const removed_list = this.currentTarget.innerText
-          .split(/(.*?[.,;?])/g)
-          .filter((i) => i && i.trim());
+            .split(/(.*?[.,;?])/g)
+            .filter((i) => i && i.trim());
 
         let temp_semanticList = this.semanticList;
         removed_list.forEach((i) => {
@@ -276,27 +305,27 @@ export default {
         this.$store.commit("clear_element");
       } else if (this.xDiff < -180) {
         const insertedList = this.currentTarget.innerText
-          .split(/(.*?[.,;?])/g)
-          .filter((i) => i && i.trim())
-          .map((val) => {
-            return {
-              key: this.uuidv4(),
-              text: val,
-              id: this.uuidv4(),
-              fadeIn: true,
-            };
-          });
+            .split(/(.*?[.,;?])/g)
+            .filter((i) => i && i.trim())
+            .map((val) => {
+              return {
+                key: this.uuidv4(),
+                text: val,
+                id: this.uuidv4(),
+                fadeIn: true,
+              };
+            });
 
-        const selectedSpanElement = this.currentTarget.nextElementSibling.childNodes[2]
-        // while (selectedSpanElement && selectedSpanElement.tagName !== "SPAN") {
-        //   selectedSpanElement = this.currentTarget.nextElementSibling;
-        // }
-        const currentIndex = parseInt(selectedSpanElement.dataset.index) - 1
+        let insertedIndex = parseInt(this.$store.state.current_block_index)
+        if (!this.currentTarget.nextElementSibling.nextElementSibling || !this.currentTarget.nextElementSibling.nextElementSibling.nextElementSibling) {
+          insertedIndex = insertedIndex + 1
+        }
+        this.$store.commit("update_current_index", parseInt(insertedIndex) + insertedList.length);
+
         this.currentTarget.parentNode.removeChild(this.currentTarget);
-
-        console.log('insertedList', selectedSpanElement, currentIndex, insertedList)
         let semantic_block = this.semanticList;
-        semantic_block.splice(parseInt(currentIndex) + 1, 0, ...insertedList);
+        semantic_block.splice(parseInt(insertedIndex), 0, ...insertedList);
+
         this.$store.commit("set_semanticList", semantic_block);
         this.$store.commit("clear_element");
       } else {
@@ -317,7 +346,7 @@ export default {
 
       socket.emit("startRecording");
       audioContext = window.AudioContext || window.webkitAudioContext;
-      context = new audioContext({ latencyHint: "interactive" });
+      context = new audioContext({latencyHint: "interactive"});
       processor = context.createScriptProcessor(2048, 1, 1);
       processor.connect(context.destination);
       context.resume();
@@ -332,15 +361,15 @@ export default {
             return;
           }
           socket.emit(
-            "BINARY_DATA",
-            this.downsampleBuffer(e.inputBuffer.getChannelData(0), 44100, 16000)
+              "BINARY_DATA",
+              this.downsampleBuffer(e.inputBuffer.getChannelData(0), 44100, 16000)
           );
         };
       };
 
       navigator.mediaDevices
-        .getUserMedia({ audio: true, video: false })
-        .then(handleSuccess);
+          .getUserMedia({audio: true, video: false})
+          .then(handleSuccess);
     },
     turnOffMic() {
       this.isStreaming = false;
@@ -384,11 +413,11 @@ export default {
       while (offsetResult < result.length) {
         let nextOffsetBuffer = Math.round((offsetResult + 1) * sampleRateRatio);
         let accum = 0,
-          count = 0;
+            count = 0;
         for (
-          let i = offsetBuffer;
-          i < nextOffsetBuffer && i < buffer.length;
-          i++
+            let i = offsetBuffer;
+            i < nextOffsetBuffer && i < buffer.length;
+            i++
         ) {
           accum += buffer[i];
           count++;
@@ -402,7 +431,7 @@ export default {
     },
     getFinalResults() {
       return this.formattedMessages.filter(
-        (r) => r.results && r.results.length && r.results[0].isFinal
+          (r) => r.results && r.results.length && r.results[0].isFinal
       );
     },
 
@@ -429,9 +458,9 @@ export default {
         window.document.exitFullscreen().catch(console.error);
       } else {
         window.document
-          .querySelector("#app")
-          .requestFullscreen({ navigationUI: "hide" })
-          .catch(console.error);
+            .querySelector("#app")
+            .requestFullscreen({navigationUI: "hide"})
+            .catch(console.error);
 
         this.isFullScreen = true;
       }
@@ -439,24 +468,22 @@ export default {
   },
   async created() {
     socket = io(
-      `${
-        process.env.NODE_ENV === "production"
-          ? "https://ryanyen2.tech/"
-          : "http://localhost:3000/"
-      }` + nowDay
+        `${
+            process.env.NODE_ENV === "production"
+                ? "https://ryanyen2.tech/"
+                : "http://localhost:3000/"
+        }` + nowDay
     );
 
     socket.on("TRANSCRIPT", (data) => {
       this.formattedMessages = this.formattedMessages.concat(data);
       this.messages = this.getFinalAndLatestInterimResult();
 
-      const results = this.messages
-        .map((msg) =>
-          msg.results.map((result) => result.alternatives[0].transcript)
-        )
-        .reduce((a, b) => a.concat(b), []);
-
-      this.voice2text = results;
+      this.voice2text = this.messages
+          .map((msg) =>
+              msg.results.map((result) => result.alternatives[0].transcript)
+          )
+          .reduce((a, b) => a.concat(b), []);
     });
 
     socket.emit("joinRoom", this.uuidv4());

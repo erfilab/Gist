@@ -39,7 +39,7 @@ export default {
     };
   },
   computed: {
-    ...mapGetters(["selectedNo", "semanticList"]),
+    ...mapGetters(["selectedNo", "semanticList", "selectedElements"]),
   },
 
   methods: {
@@ -54,12 +54,14 @@ export default {
         const sel = window.getSelection();
         sel.removeAllRanges();
         sel.addRange(range);
-        this.$store.commit("update_current_index", target.dataset.index);
+
+        this.$store.commit("update_current_index", parseInt(target.dataset.index) + 1);
         let targetSibling = document.querySelector(
           `[data-index="${parseInt(target.dataset.index) + 1}"]`
         );
 
         this.$store.commit("update_current_target_block", targetSibling);
+        // console.log('st', target.dataset.index, targetSibling)
 
         const cursor_ele = document.getElementById("my_cursor");
         sel.focusNode.parentNode.insertBefore(
@@ -147,8 +149,7 @@ export default {
       const yUp = e.touches[0].clientY;
       if (Math.abs(this.startY - yUp - this.yDiff) > 25) {
         if (this.startY - yUp > this.yDiff) {
-          console.log("up", this.currentTapTarget.innerText);
-          if (!this.currentTapTarget.parentNode.nextElementSibling) {
+          if (!this.currentTapTarget.parentNode.nextElementSibling || this.currentTapTarget.parentNode.nextElementSibling.id) {
             this.currentTapTarget.style.backgroundColor = "#E0E0E0";
             this.$store.commit("remove_element");
           }
@@ -160,22 +161,22 @@ export default {
           if (this.currentTapTarget && this.currentTapTarget.tagName === "SPAN" && this.currentTapTarget.style.display !== "none") {
             if (
               this.currentTapTarget.innerText.length &&
-              (!this.$store.state.selected_elements.length ||
+              (!this.selectedElements.length ||
                 this.currentTapTarget.innerText !==
-                  this.$store.state.selected_elements.slice(-1)[0].innerText)
+                  this.selectedElements.slice(-1)[0].innerText)
             ) {
               this.currentTapTarget.style.backgroundColor = "yellow";
               this.$store.commit("add_element", this.currentTapTarget);
             }
 
-            if (this.currentTapTarget.parentNode.nextElementSibling && this.currentTapTarget.parentNode.nextElementSibling.innerText.length > 1) {
+            if (this.currentTapTarget.parentNode.nextElementSibling && this.currentTapTarget.parentNode.nextElementSibling.innerText.length > 1 && !this.currentTapTarget.parentNode.nextElementSibling.id) {
               this.currentTapTarget = this.currentTapTarget.parentNode.nextElementSibling.firstChild;
             }
           } else {
-            this.currentTapTarget = this.currentTapTarget.nextElementSibling? 
+            this.currentTapTarget = this.currentTapTarget.nextElementSibling?
             this.currentTapTarget.nextElementSibling : this.currentTapTarget;
           }
-          console.log("next", this.currentTapTarget.tagName, this.currentTapTarget.innerText);
+          // console.log("next", this.currentTapTarget.tagName, this.currentTapTarget.innerText);
         }
 
         this.yDiff = this.startY - yUp;
@@ -199,16 +200,14 @@ export default {
         this.handleTouchEnd,
         true
       );
-      console.log("touch end", this.currentTapTarget, this.currentTapTarget.dataset.index);
       this.$store.commit(
         "update_current_index",
-        parseInt(this.currentTapTarget.dataset.index) - 1
+        parseInt(this.currentTapTarget.dataset.index)
       );
       const targetSibling = document.querySelector(
         `[data-index="${parseInt(this.currentTapTarget.dataset.index)}"]`
       );
       this.$store.commit("update_current_target_block", targetSibling);
-      console.log("targetSibling: ", targetSibling);
 
       this.set_cursor_location(this.currentTapTarget.parentNode, true);
       this.$store.commit("add_selectedNo", 1);

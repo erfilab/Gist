@@ -52,8 +52,11 @@ export default {
   watch: {
     async newSemanticContent() {
       if (this.newSemanticContent && this.newSemanticContent.length) {
-        const currentIndex = this.$store.state.current_block_index;
-        // console.log("New content: ", this.newSemanticContent, currentIndex);
+        const currentIndex = parseInt(this.$store.state.current_block_index) + (
+        (this.current_target_block && document.getElementById(this.current_target_block.id))?
+           0 : 1);
+
+        // console.log('ci', currentIndex, this.$store.state.current_block_index)
 
         const insertedList = this.newSemanticContent
           .join(" ")
@@ -70,7 +73,7 @@ export default {
 
         let semantic_block = this.semanticList;
         semantic_block.splice(
-            parseInt(currentIndex) + 1,
+            parseInt(currentIndex),
             this.previous_length,
             ...insertedList
           );
@@ -80,7 +83,7 @@ export default {
         speaking_area.style.display = 'block'
 
         const cursor_ele = document.getElementById("my_cursor");
-        
+
         if (this.current_target_block && document.getElementById(this.current_target_block.id)) {
           this.current_target_block.parentNode.insertBefore(
             cursor_ele,
