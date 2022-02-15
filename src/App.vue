@@ -134,6 +134,7 @@ export default {
           this.changeLocationAndSpeak();
           this.selectedElements.forEach((i) => {
             i.parentNode.removeChild(i);
+            // if (i.nextElementSibling) i.parentNode.removeChild(i.nextElementSibling);
           });
 
           const to_modify_area = document.getElementById("to-modify-area");
@@ -143,10 +144,10 @@ export default {
             `to-modify-area-${this.selectedNo}`
           );
 
-          clone_modify_area.setAttribute(
-            "start-index",
-            this.selectedElements[0].dataset.index
-          );
+          // clone_modify_area.setAttribute(
+          //   "start-index",
+          //   this.selectedElements[0].dataset.index
+          // );
 
           clone_modify_area.innerHTML = this.selectedElements
             .map((ele) => ele.innerHTML)
@@ -218,6 +219,34 @@ export default {
       this.currentTarget = document.getElementById(e.target.id);
       const firstTouch = this.getTouches(e)[0];
       this.startX = firstTouch.clientX;
+
+      this.$store.commit("clear_element");
+      this.$store.commit("change_location_speaking");
+
+      let selectedSpanElement = this.currentTarget.nextElementSibling;
+      while (selectedSpanElement && selectedSpanElement.tagName !== "SPAN") {
+        selectedSpanElement = this.currentTarget.nextElementSibling;
+      }
+
+      const insertedIndex =
+        parseInt(selectedSpanElement.firstChild.dataset.index) - 1;
+      const targetSibling = document.querySelector(
+        `[data-index="${insertedIndex + 1}"]`
+      );
+
+      this.$store.commit("update_current_target_block", targetSibling);
+      this.$store.commit("update_current_index", insertedIndex);
+
+      const speaking_area = document.getElementById("speaking_area");
+      speaking_area.style.display = "contents";
+      const cursorElement = document.getElementById("my_cursor");
+
+      targetSibling.parentNode.insertBefore(cursorElement, targetSibling);
+
+      cursorElement.parentNode.insertBefore(
+        speaking_area,
+        cursorElement.nextElementSibling
+      );
     },
     handleTouchMove(e) {
       if (!this.startX) return;
@@ -241,9 +270,7 @@ export default {
 
         let temp_semanticList = this.semanticList;
         removed_list.forEach((i) => {
-          temp_semanticList = temp_semanticList.filter(
-            (ele) => ele.text !== i
-          );
+          temp_semanticList = temp_semanticList.filter((ele) => ele.text !== i);
         });
         this.$store.commit("set_semanticList", temp_semanticList);
         this.$store.commit("clear_element");
@@ -259,11 +286,15 @@ export default {
               fadeIn: true,
             };
           });
-        const currentIndex = parseInt(
-          this.currentTarget.getAttribute("start-index")
-        );
+
+        const selectedSpanElement = this.currentTarget.nextElementSibling.childNodes[2]
+        // while (selectedSpanElement && selectedSpanElement.tagName !== "SPAN") {
+        //   selectedSpanElement = this.currentTarget.nextElementSibling;
+        // }
+        const currentIndex = parseInt(selectedSpanElement.dataset.index) - 1
         this.currentTarget.parentNode.removeChild(this.currentTarget);
 
+        console.log('insertedList', selectedSpanElement, currentIndex, insertedList)
         let semantic_block = this.semanticList;
         semantic_block.splice(parseInt(currentIndex) + 1, 0, ...insertedList);
         this.$store.commit("set_semanticList", semantic_block);

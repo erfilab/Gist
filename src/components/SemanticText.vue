@@ -80,6 +80,7 @@ export default {
         speaking_area.style.display = 'block'
 
         const cursor_ele = document.getElementById("my_cursor");
+        
         if (this.current_target_block && document.getElementById(this.current_target_block.id)) {
           this.current_target_block.parentNode.insertBefore(
             cursor_ele,

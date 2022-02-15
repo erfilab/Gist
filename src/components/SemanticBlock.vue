@@ -99,7 +99,6 @@ export default {
       );
 
       this.currentTapTarget = e.target;
-      console.log("single tap", this.currentTapTarget);
 
       this.currentTapTarget.addEventListener(
         "touchstart",
@@ -148,6 +147,11 @@ export default {
       const yUp = e.touches[0].clientY;
       if (Math.abs(this.startY - yUp - this.yDiff) > 25) {
         if (this.startY - yUp > this.yDiff) {
+          console.log("up", this.currentTapTarget.innerText);
+          if (!this.currentTapTarget.parentNode.nextElementSibling) {
+            this.currentTapTarget.style.backgroundColor = "#E0E0E0";
+            this.$store.commit("remove_element");
+          }
           this.currentTapTarget =
             this.currentTapTarget.parentNode.previousElementSibling.firstChild;
           this.currentTapTarget.style.backgroundColor = "#E0E0E0";
@@ -164,13 +168,14 @@ export default {
               this.$store.commit("add_element", this.currentTapTarget);
             }
 
-            if (this.currentTapTarget.parentNode.nextElementSibling && this.currentTapTarget.parentNode.nextElementSibling.innerText.length) {
+            if (this.currentTapTarget.parentNode.nextElementSibling && this.currentTapTarget.parentNode.nextElementSibling.innerText.length > 1) {
               this.currentTapTarget = this.currentTapTarget.parentNode.nextElementSibling.firstChild;
             }
           } else {
             this.currentTapTarget = this.currentTapTarget.nextElementSibling? 
             this.currentTapTarget.nextElementSibling : this.currentTapTarget;
           }
+          console.log("next", this.currentTapTarget.tagName, this.currentTapTarget.innerText);
         }
 
         this.yDiff = this.startY - yUp;
@@ -194,6 +199,7 @@ export default {
         this.handleTouchEnd,
         true
       );
+      console.log("touch end", this.currentTapTarget, this.currentTapTarget.dataset.index);
       this.$store.commit(
         "update_current_index",
         parseInt(this.currentTapTarget.dataset.index) - 1
@@ -202,6 +208,7 @@ export default {
         `[data-index="${parseInt(this.currentTapTarget.dataset.index)}"]`
       );
       this.$store.commit("update_current_target_block", targetSibling);
+      console.log("targetSibling: ", targetSibling);
 
       this.set_cursor_location(this.currentTapTarget.parentNode, true);
       this.$store.commit("add_selectedNo", 1);
