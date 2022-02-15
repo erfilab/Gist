@@ -91,7 +91,7 @@ export default {
   name: "App",
 
   data: () => ({
-    text: "Once upon a time, there was a king; who used to wear a single horned crown. He had a lavish palace, three beautiful wives, and seven children; Once upon a time, there was a king; who used to wear a single horned crown. He had a lavish palace, three beautiful wives, and seven children;",
+    text: "Once upon a time, there was a king;",
     voice2text: "",
 
     resultError: false,
