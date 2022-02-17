@@ -237,24 +237,32 @@ export default {
           .filter((i) => i && i.trim());
 
       // check if is the last element
-      if (!this.currentTarget.nextElementSibling) {
+      if (!this.currentTarget.nextElementSibling ||
+          (this.currentTarget.nextElementSibling.tagName === 'DIV' &&
+              this.currentTarget.nextElementSibling.nextElementSibling &&
+              this.currentTarget.nextElementSibling.nextElementSibling.tagName === 'DIV' &&
+              !this.currentTarget.nextElementSibling.nextElementSibling.nextElementSibling
+          )) {
         // is the last element
-        selectedSpanElement = this.currentTarget.previousElementSibling.firstChild
-        insertedIndex = parseInt(selectedSpanElement.dataset.index) + selectedList.length
+        if (!this.currentTarget.previousElementSibling) {
+          // the first element being selected
+          insertedIndex = 0
+        } else {
+          selectedSpanElement = this.currentTarget.previousElementSibling.firstChild
+          insertedIndex = parseInt(selectedSpanElement.dataset.index) + selectedList.length
+        }
         targetSibling = document.getElementById('last-element')
         this.$store.commit("update_current_target_block", null);
       } else {
         if (this.currentTarget.nextElementSibling.tagName === 'DIV') {
           if (this.currentTarget.nextElementSibling.nextElementSibling && this.currentTarget.nextElementSibling.nextElementSibling.firstChild.innerText.length > 1) {
             selectedSpanElement = this.currentTarget.nextElementSibling.nextElementSibling.firstChild
-          }
-          else selectedSpanElement = this.currentTarget.nextElementSibling.nextElementSibling.nextElementSibling.firstChild
+          } else selectedSpanElement = this.currentTarget.nextElementSibling.nextElementSibling.nextElementSibling.firstChild
         } else {
           if (this.currentTarget.nextElementSibling && this.currentTarget.nextElementSibling.firstChild.innerText.length > 1) {
             // select other green and come back
             selectedSpanElement = this.currentTarget.nextElementSibling.firstChild
-          }
-          else selectedSpanElement = this.currentTarget.nextElementSibling.childNodes[2]
+          } else selectedSpanElement = this.currentTarget.nextElementSibling.childNodes[2]
         }
 
         insertedIndex = parseInt(selectedSpanElement.dataset.index)
@@ -290,7 +298,7 @@ export default {
         }, ${165 - this.xDiff})`;
       }
     },
-    handleTouchEnd() {
+    async handleTouchEnd() {
       if (this.xDiff > 180) {
         this.currentTarget.parentNode.removeChild(this.currentTarget);
         const removed_list = this.currentTarget.innerText
@@ -317,17 +325,29 @@ export default {
             });
 
         let insertedIndex = parseInt(this.$store.state.current_block_index)
-        if (!this.currentTarget.nextElementSibling.nextElementSibling || !this.currentTarget.nextElementSibling.nextElementSibling.nextElementSibling) {
-          insertedIndex = insertedIndex + 1
+        let semantic_block = this.semanticList.slice(0);
+        if (!this.currentTarget.nextElementSibling ||
+            (this.currentTarget.nextElementSibling.tagName === 'DIV' &&
+                this.currentTarget.nextElementSibling.nextElementSibling &&
+                this.currentTarget.nextElementSibling.nextElementSibling.tagName === 'DIV' &&
+                !this.currentTarget.nextElementSibling.nextElementSibling.nextElementSibling
+            )) {
+          // is the last element
+          if (!this.currentTarget.previousElementSibling) {
+            // select all
+            semantic_block.push(...insertedList)
+          } else {
+            insertedIndex = insertedIndex + 1
+            semantic_block.splice(parseInt(insertedIndex), 0, ...insertedList);
+          }
+        } else {
+          semantic_block.splice(parseInt(insertedIndex), 0, ...insertedList);
         }
-        this.$store.commit("update_current_index", parseInt(insertedIndex) + insertedList.length);
-
         this.currentTarget.parentNode.removeChild(this.currentTarget);
-        let semantic_block = this.semanticList;
-        semantic_block.splice(parseInt(insertedIndex), 0, ...insertedList);
-
-        this.$store.commit("set_semanticList", semantic_block);
-        this.$store.commit("clear_element");
+        await this.$store.commit("update_current_index", parseInt(insertedIndex) + insertedList.length);
+        await this.$store.commit("set_semanticList", semantic_block);
+        // console.log('insert: ', insertedIndex, this.semanticList)
+        await this.$store.commit("clear_element");
       } else {
         this.currentTarget.style.right = 0;
         this.currentTarget.style.backgroundColor = "rgb(197, 225, 165)";
