@@ -91,7 +91,7 @@ export default {
   name: "App",
 
   data: () => ({
-    text: "Once upon a time, there was a king;",
+    text: "",
     voice2text: "",
 
     resultError: false,
@@ -309,6 +309,7 @@ export default {
         removed_list.forEach((i) => {
           temp_semanticList = temp_semanticList.filter((ele) => ele.text !== i);
         });
+
         this.$store.commit("set_semanticList", temp_semanticList);
         this.$store.commit("clear_element");
       } else if (this.xDiff < -180) {
@@ -507,6 +508,9 @@ export default {
     });
 
     socket.emit("joinRoom", this.uuidv4());
+
+    await this.$store.commit("update_current_target_block", null);
+    await this.$store.commit("update_current_index", 0);
   },
   beforeUnmount() {
     socket.disconnect();

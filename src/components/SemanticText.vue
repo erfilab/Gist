@@ -52,11 +52,15 @@ export default {
   watch: {
     async newSemanticContent() {
       if (this.newSemanticContent && this.newSemanticContent.length) {
-        const currentIndex = parseInt(this.$store.state.current_block_index) + (
+        let currentIndex = parseInt(this.$store.state.current_block_index) + (
         (this.current_target_block && document.getElementById(this.current_target_block.id))?
            0 : 1);
 
-        // console.log('ci', currentIndex, this.$store.state.current_block_index)
+        // if (currentIndex < 0 &&
+        //     this.$store.state.current_block_index < 0 &&
+        //     !this.previous_length
+        // ) currentIndex = 0
+        // console.log('ci', currentIndex, this.$store.state.current_block_index, this.previous_length)
 
         const insertedList = this.newSemanticContent
           .join(" ")
@@ -77,6 +81,8 @@ export default {
             this.previous_length,
             ...insertedList
           );
+
+
         this.$store.commit("set_semanticList", semantic_block);
         this.$store.commit("set_previous_length", insertedList.length);
         const speaking_area = document.getElementById('speaking_area_lower')
