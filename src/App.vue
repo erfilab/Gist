@@ -17,14 +17,10 @@
         </v-main>
       </v-touch>
 
-      <v-btn
-          fab
-          dark
-          absolute
-          bottom
-          left
-          style="position: fixed; bottom: 15px; left: 5px"
-          @click.end="toggleFullScreen"
+      <v-btn fab dark
+             absolute bottom left
+             style="position: fixed; bottom: 15px; left: 25px"
+             @click.end="toggleFullScreen"
       >
         <v-icon
         >{{ isFullScreen ? "mdi-fullscreen-exit" : "mdi-fullscreen" }}
@@ -42,15 +38,18 @@
       >
         <v-icon>mdi-close</v-icon>
       </v-btn> -->
-      <v-btn
-          :color="isStreaming ? 'green' : 'grey'"
-          fab
-          dark
-          absolute
-          bottom
-          right
-          style="position: fixed; bottom: 15px; right: 36px"
-          @click="isStreaming ? turnOffMic() : turnOnMic()"
+      <v-btn fab dark
+             absolute bottom left
+             style="position: fixed; bottom: 15px; left: 100px"
+             @click="exportText"
+      >
+        <v-icon>mdi-download</v-icon>
+      </v-btn>
+      <v-btn fab dark
+             absolute bottom right
+             :color="isStreaming ? 'green' : 'grey'"
+             style="position: fixed; bottom: 15px; right: 25px"
+             @click="isStreaming ? turnOffMic() : turnOnMic()"
       >
         <v-icon>mdi-microphone</v-icon>
       </v-btn>
@@ -203,6 +202,15 @@ export default {
   },
 
   methods: {
+    // export the text to the clipboard
+    async exportText() {
+      let text = "";
+      this.$store.state.semanticList.forEach(ele => {
+        text += ele.text.trim();
+        text += " ";
+      })
+      await navigator.clipboard.writeText(text.trim());
+    },
     uuidv4() {
       return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, (c) =>
           (
