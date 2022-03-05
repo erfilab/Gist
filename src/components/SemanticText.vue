@@ -7,6 +7,7 @@
       :semantic_id="block_i.id"
       :semantic_index="index"
       :class="block_i.fadeIn? 'fadingEffect': ''"
+      :trialName="trialName"
     >
     </SemanticBlock>
   </div>
@@ -16,6 +17,8 @@
 import SemanticBlock from "@/components/SemanticBlock";
 import store from "../store/";
 import { mapGetters } from "vuex";
+// import {db} from '@/plugins/firebase.js';
+// import {push, ref} from "firebase/database";
 
 export default {
   store,
@@ -24,7 +27,7 @@ export default {
   components: {
     SemanticBlock,
   },
-  props: ["semantic_text"],
+  props: ["semantic_text", 'trialName'],
 
   data() {
     return {
@@ -81,6 +84,14 @@ export default {
             this.previous_length,
             ...insertedList
           );
+
+        // await push(ref(db, `trials/${this.trialName}/systemLogs`), {
+        //   timestamp: new Date().getTime(),
+        //   type: `transcript_${(this.current_target_block && document.getElementById(this.current_target_block.id))?'respeak':'newspeak'}`,
+        //   content: this.newSemanticContent,
+        //   targetId: (this.current_target_block && document.getElementById(this.current_target_block.id))? this.current_target_block.id : null,
+        //   insertedIndex: currentIndex,
+        // }).catch(console.error)
 
 
         this.$store.commit("set_semanticList", semantic_block);

@@ -11,7 +11,7 @@
           "
             id="main"
         >
-          <SemanticText :semantic_text="this.text"></SemanticText>
+          <SemanticText :semantic_text="this.text" :trialName="this.trialName"></SemanticText>
           <MyCursor id="my_cursor"/>
           <div id="last-element"/>
         </v-main>
@@ -81,6 +81,8 @@ import MyCursor from "@/components/MyCursor";
 
 import {io} from "socket.io-client";
 import {mapGetters} from "vuex";
+import {db} from '@/plugins/firebase.js';
+import {ref, set, get, push} from 'firebase/database';
 
 const nowDay = new Date().toISOString().slice(0, 10);
 let socket = null;
@@ -106,6 +108,10 @@ export default {
     startX: null,
     xDiff: 0,
     currentTarget: null,
+
+    // trial information
+    trialName: null,
+
   }),
 
   components: {
@@ -127,7 +133,7 @@ export default {
   },
 
   watch: {
-    selectedNo() {
+    async selectedNo() {
       if (this.selectedNo >= 1) {
         if (this.selectedElements.length > 0) {
           this.changeLocationAndSpeak();
@@ -173,6 +179,12 @@ export default {
               clone_modify_area.nextElementSibling
           );
 
+          await this.storeDataLog({
+            type: 'multi_select',
+            content: clone_modify_area.innerHTML,
+            targetId: `to-modify-area-${this.selectedNo}`
+          })
+
           // remove selected blocks
           this.selectedElements.forEach((i) => {
             if (i.previousElementSibling && i.previousElementSibling.tagName === 'HR') {
@@ -202,6 +214,13 @@ export default {
   },
 
   methods: {
+    async storeDataLog(payload) {
+      await push(ref(db, `trials/${this.trialName}/systemLogs`), {
+        timestamp: new Date().getTime(),
+        ...payload,
+      }).catch(console.error)
+      // .then(res => this.currentChannel = {...this.currentChannel, dbKey: res.key})
+    },
     // export the text to the clipboard
     async exportText() {
       let text = "";
@@ -210,6 +229,10 @@ export default {
         text += " ";
       })
       await navigator.clipboard.writeText(text.trim());
+      await this.storeDataLog({
+        type: 'export',
+        content: text
+      })
     },
     uuidv4() {
       return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, (c) =>
@@ -228,7 +251,7 @@ export default {
     getTouches(e) {
       return e.touches || e.originalEvent.touches;
     },
-    handleTouchStart(e) {
+    async handleTouchStart(e) {
       this.currentTarget = document.getElementById(e.target.id);
       const firstTouch = this.getTouches(e)[0];
       this.startX = firstTouch.clientX;
@@ -292,6 +315,12 @@ export default {
           speaking_area,
           cursorElement.nextElementSibling
       );
+
+      await this.storeDataLog({
+        type: 'touch_block',
+        targetId: e.target.id,
+        content: this.currentTarget.innerText,
+      })
     },
     handleTouchMove(e) {
       if (!this.startX) return;
@@ -317,6 +346,12 @@ export default {
         removed_list.forEach((i) => {
           temp_semanticList = temp_semanticList.filter((ele) => ele.text !== i);
         });
+
+        await this.storeDataLog({
+          type: 'remove_text',
+          content: this.currentTarget.innerText,
+          currentContent: temp_semanticList
+        })
 
         this.$store.commit("set_semanticList", temp_semanticList);
         this.$store.commit("clear_element");
@@ -352,6 +387,12 @@ export default {
         } else {
           semantic_block.splice(parseInt(insertedIndex), 0, ...insertedList);
         }
+
+        await this.storeDataLog({
+          type: 'remain_text',
+          content: this.currentTarget.innerText,
+          currentContent: semantic_block
+        })
         this.currentTarget.parentNode.removeChild(this.currentTarget);
         await this.$store.commit("update_current_index", parseInt(insertedIndex) + insertedList.length);
         await this.$store.commit("set_semanticList", semantic_block);
@@ -366,12 +407,17 @@ export default {
       this.xDiff = 0;
       this.currentTarget = null;
     },
-    turnOnMic() {
+    async turnOnMic() {
       this.isStreaming = true;
       this.messages = [];
       this.formattedMessages = [];
       this.voice2text = null;
       this.$store.commit("clear_element");
+
+      await this.storeDataLog({
+        type: 'microphone',
+        event: true
+      })
 
       socket.emit("startRecording");
       audioContext = window.AudioContext || window.webkitAudioContext;
@@ -416,6 +462,11 @@ export default {
         audioInput = null;
         globalStream = null;
       });
+
+      this.storeDataLog({
+        type: 'microphone',
+        event: false
+      })
 
       this.voice2text = "";
       this.formattedMessages = [];
@@ -477,6 +528,16 @@ export default {
       const interim = this.getCurrentInterimResult();
       if (interim) {
         final.push(interim);
+      } else {
+        const finalResults = this.messages
+            .map((msg) =>
+                msg.results.map((result) => result.alternatives[0].transcript)
+            )
+            .reduce((a, b) => a.concat(b), [])
+        this.storeDataLog({
+          type: `final_transcript`,
+          content: finalResults
+        })
       }
       return final;
     },
@@ -493,6 +554,10 @@ export default {
 
         this.isFullScreen = true;
       }
+      this.storeDataLog({
+        type: 'fullscreen',
+        event: this.isFullScreen
+      })
     },
   },
   async created() {
@@ -504,7 +569,7 @@ export default {
         }` + nowDay
     );
 
-    socket.on("TRANSCRIPT", (data) => {
+    socket.on("TRANSCRIPT", async (data) => {
       this.formattedMessages = this.formattedMessages.concat(data);
       this.messages = this.getFinalAndLatestInterimResult();
 
@@ -512,13 +577,37 @@ export default {
           .map((msg) =>
               msg.results.map((result) => result.alternatives[0].transcript)
           )
-          .reduce((a, b) => a.concat(b), []);
+          .reduce((a, b) => a.concat(b), [])
     });
 
-    socket.emit("joinRoom", this.uuidv4());
+    this.trialName = `trial-${this.uuidv4()}`
+    const trialRef = ref(db, `trials/` + this.trialName)
+    socket.emit("joinRoom", this.trialName);
+
+    await get(trialRef).then(async (snapshot) => {
+      if (!snapshot.exists()) {
+        await set(trialRef, {
+          trialName: this.trialName,
+          createdAt: new Date().getTime(),
+        }).catch(console.error)
+      }
+    }).catch((error) => {
+      console.error(error);
+    });
 
     await this.$store.commit("update_current_target_block", null);
     await this.$store.commit("update_current_index", 0);
+
+    window.onerror = async function (msg, url, line, col, error) {
+      await push(ref(db, `trials/${this.trialName}/errorLogs`), {
+        timestamp: new Date().getTime(),
+        errorMsg: msg,
+        errorUrl: url,
+        errorLine: line,
+        errorCol: col,
+        error: error
+      })
+    }
   },
   beforeUnmount() {
     socket.disconnect();
