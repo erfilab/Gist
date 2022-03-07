@@ -11,7 +11,7 @@
           "
             id="main"
         >
-          <SemanticText :semantic_text="this.text" :trialName="this.trialName"></SemanticText>
+          <SemanticText :semantic_text="this.text" :trialName="this.trialName" id="semantic_text"></SemanticText>
           <MyCursor id="my_cursor"/>
           <div id="last-element"/>
         </v-main>
@@ -224,9 +224,16 @@ export default {
     // export the text to the clipboard
     async exportText() {
       let text = "";
-      this.$store.state.semanticList.forEach(ele => {
-        text += ele.text.trim();
-        text += " ";
+      const semantic_text = document.getElementById("semantic_text");
+      semantic_text.childNodes.forEach(child => {
+        if (child.tagName === 'SPAN') {
+          child.childNodes.forEach(grandChild => {
+            if (grandChild.tagName === 'SPAN' && grandChild.innerHTML !== "&nbsp;") {
+              text += grandChild.innerHTML.trim();
+              text += " ";
+            }
+          })
+        }
       })
       await navigator.clipboard.writeText(text.trim());
       await this.storeDataLog({
