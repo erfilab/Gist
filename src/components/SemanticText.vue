@@ -55,8 +55,8 @@ export default {
     async newSemanticContent() {
       if (this.newSemanticContent && this.newSemanticContent.length) {
         let currentIndex = parseInt(this.$store.state.current_block_index) + (
-        (this.current_target_block && document.getElementById(this.current_target_block.id))?
-           0 : 1);
+        (this.current_target_block)?
+           0 : 2);
 
         // if (currentIndex < 0 &&
         //     this.$store.state.current_block_index < 0 &&

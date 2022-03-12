@@ -253,7 +253,8 @@ export default {
         const targetSibling = document.querySelector(
             `[data-index="${parseInt(this.currentTapTarget.dataset.index)}"]`
         );
-        if (!this.currentTapTarget.nextElementSibling) {
+
+        if (!this.currentTapTarget.parentNode.nextElementSibling) {
           const inserted_target = document.getElementById('last-element')
           this.$store.commit("update_current_target_block", null);
           this.set_cursor_location(inserted_target, true);
