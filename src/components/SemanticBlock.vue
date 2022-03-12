@@ -1,25 +1,25 @@
 <template>
   <span>
     <span
-      @click.stop="singleTapText"
-      v-touch="{
-        //start: (e) => touchStart(e),
-        //end: (e) => endDrag(e),
-        //move: (e) => startDraggingHandler(e),
+
+        v-touch="{
+        start: (e) => handleTouchStart(e),
+        end: (e) => handleTouchEnd(e),
+        move: (e) => handleTouchMove(e),
       }"
-      :id="this.id"
-      :data-index="this.semantic_index"
-      style="background-color: #e0e0e0; padding: 5px"
+        :id="this.id"
+        :data-index="this.semantic_index"
+        style="background-color: #e0e0e0; padding: 5px; margin: 0 5px; right: 0; position: relative"
     >
       {{ this.block }}
     </span>
-    <span>&nbsp;</span>
+    <!--    <span>&nbsp;</span>-->
   </span>
 </template>
 
 <script>
 import store from "../store/";
-import { mapGetters } from "vuex";
+import {mapGetters} from "vuex";
 import {db} from '@/plugins/firebase.js';
 import {push, ref} from "firebase/database";
 
@@ -65,7 +65,7 @@ export default {
 
         this.$store.commit("update_current_index", parseInt(target.dataset.index) + 1);
         let targetSibling = document.querySelector(
-          `[data-index="${parseInt(target.dataset.index) + 1}"]`
+            `[data-index="${parseInt(target.dataset.index) + 1}"]`
         );
 
         this.$store.commit("update_current_target_block", targetSibling);
@@ -73,14 +73,14 @@ export default {
 
         const cursor_ele = document.getElementById("my_cursor");
         sel.focusNode.parentNode.insertBefore(
-          cursor_ele,
-          sel.focusNode.nextElementSibling
+            cursor_ele,
+            sel.focusNode.nextElementSibling
         );
       }
       if (!isNaN((parseInt(target.dataset.index) + 1))) {
         await this.storeDataLog({
-          type: `set_cursor_${isMultiSelection?'multi':'single'}`,
-          targetId: target.id? target.id : (parseInt(target.dataset.index) + 1),
+          type: `set_cursor_${isMultiSelection ? 'multi' : 'single'}`,
+          targetId: target.id ? target.id : (parseInt(target.dataset.index) + 1),
         })
       }
     },
@@ -110,27 +110,27 @@ export default {
       speaking_area.style.display = "contents";
       const cursorElement = document.getElementById("my_cursor");
       cursorElement.parentNode.insertBefore(
-        speaking_area,
-        cursorElement.nextElementSibling
+          speaking_area,
+          cursorElement.nextElementSibling
       );
 
       this.currentTapTarget = e.target;
 
       this.currentTapTarget.addEventListener(
-        "touchstart",
-        this.handleTouchStart,
-        false
+          "touchstart",
+          this.handleTouchStart,
+          false
       );
 
       this.currentTapTarget.addEventListener(
-        "touchmove",
-        this.handleTouchMove,
-        false
+          "touchmove",
+          this.handleTouchMove,
+          false
       );
       this.currentTapTarget.addEventListener(
-        "touchend",
-        this.handleTouchEnd,
-        false
+          "touchend",
+          this.handleTouchEnd,
+          false
       );
 
 
@@ -157,7 +157,25 @@ export default {
     getTouches(e) {
       return e.touches || e.originalEvent.touches;
     },
-    handleTouchStart(e) {
+    async handleTouchStart(e) {
+      this.$store.commit("clear_element");
+      this.$store.commit("change_location_speaking");
+      // check if target is to-modify block
+      if (!(e.target.getAttribute('id')).trim().startsWith('to-modify-area'))
+        await this.set_cursor_location(e.target, false);
+
+      const speaking_area = document.getElementById("speaking_area");
+      speaking_area.style.display = "contents";
+      const cursorElement = document.getElementById("my_cursor");
+      cursorElement.parentNode.insertBefore(
+          speaking_area,
+          cursorElement.nextElementSibling
+      );
+
+      this.currentTapTarget = e.target;
+      // console.log('start', this.currentTapTarget.dataset.index)
+
+
       document.getElementById("app").style.overflow = "hidden";
       const firstTouch = this.getTouches(e)[0];
       this.startY = firstTouch.clientY;
@@ -173,7 +191,7 @@ export default {
             this.$store.commit("remove_element");
           }
           this.currentTapTarget =
-            this.currentTapTarget.parentNode.previousElementSibling.firstChild;
+              this.currentTapTarget.parentNode.previousElementSibling.firstChild;
           this.currentTapTarget.style.backgroundColor = "#E0E0E0";
           this.$store.commit("remove_element");
           // await this.storeDataLog({
@@ -183,10 +201,10 @@ export default {
         } else {
           if (this.currentTapTarget && this.currentTapTarget.tagName === "SPAN" && this.currentTapTarget.style.display !== "none") {
             if (
-              this.currentTapTarget.innerText.length &&
-              (!this.selectedElements.length ||
-                this.currentTapTarget.innerText !==
-                  this.selectedElements.slice(-1)[0].innerText)
+                this.currentTapTarget.innerText.length &&
+                (!this.selectedElements.length ||
+                    this.currentTapTarget.innerText !==
+                    this.selectedElements.slice(-1)[0].innerText)
             ) {
               this.currentTapTarget.style.backgroundColor = "yellow";
               this.$store.commit("add_element", this.currentTapTarget);
@@ -196,8 +214,8 @@ export default {
               this.currentTapTarget = this.currentTapTarget.parentNode.nextElementSibling.firstChild;
             }
           } else {
-            this.currentTapTarget = this.currentTapTarget.nextElementSibling?
-            this.currentTapTarget.nextElementSibling : this.currentTapTarget;
+            this.currentTapTarget = this.currentTapTarget.nextElementSibling ?
+                this.currentTapTarget.nextElementSibling : this.currentTapTarget;
           }
           // await this.storeDataLog({
           //   type: `frontward_selection`,
@@ -211,36 +229,44 @@ export default {
     },
     handleTouchEnd() {
       document.getElementById("app").style.overflow = "auto";
-      this.currentTapTarget.removeEventListener(
-        "touchstart",
-        this.handleTouchStart,
-        true
-      );
-
-      this.currentTapTarget.removeEventListener(
-        "touchmove",
-        this.handleTouchMove,
-        true
-      );
-      this.currentTapTarget.removeEventListener(
-        "touchend",
-        this.handleTouchEnd,
-        true
-      );
-      this.$store.commit(
-        "update_current_index",
-        parseInt(this.currentTapTarget.dataset.index)
-      );
-      const targetSibling = document.querySelector(
-        `[data-index="${parseInt(this.currentTapTarget.dataset.index)}"]`
-      );
-      this.$store.commit("update_current_target_block", targetSibling);
-
-      this.set_cursor_location(this.currentTapTarget.parentNode, true);
+      // this.currentTapTarget.removeEventListener(
+      //   "touchstart",
+      //   this.handleTouchStart,
+      //   true
+      // );
+      //
+      // this.currentTapTarget.removeEventListener(
+      //   "touchmove",
+      //   this.handleTouchMove,
+      //   true
+      // );
+      // this.currentTapTarget.removeEventListener(
+      //   "touchend",
+      //   this.handleTouchEnd,
+      //   true
+      // );
+      if (this.yDiff) {
+        this.$store.commit(
+            "update_current_index",
+            parseInt(this.currentTapTarget.dataset.index)
+        );
+        const targetSibling = document.querySelector(
+            `[data-index="${parseInt(this.currentTapTarget.dataset.index)}"]`
+        );
+        if (!this.currentTapTarget.nextElementSibling) {
+          const inserted_target = document.getElementById('last-element')
+          this.$store.commit("update_current_target_block", null);
+          this.set_cursor_location(inserted_target, true);
+        } else {
+          this.$store.commit("update_current_target_block", targetSibling);
+          this.set_cursor_location(this.currentTapTarget, true);
+        }
+        // console.log('tgs: ', targetSibling, parseInt(this.currentTapTarget.dataset.index))
+      }
       this.$store.commit("add_selectedNo", 1);
 
-      this.startX = null;
-      this.xDiff = 0;
+      this.startY = null;
+      this.yDiff = 0;
       this.currentTapTarget = null;
     },
   },

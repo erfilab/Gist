@@ -1,5 +1,5 @@
 <template>
-  <div style="display: inline; line-height: 2em">
+  <div id="container">
     <SemanticBlock
       v-for="(block_i, index) in semanticList"
       :key="block_i.key"
@@ -34,7 +34,6 @@ export default {
       text: this.semantic_text,
     };
   },
-
   methods: {
     uuid() {
       return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(
@@ -150,6 +149,21 @@ export default {
 
 
 <style>
+
+#container {
+  display: inline;
+  line-height: 2em;
+  /*user-select: all;*/
+  -webkit-touch-callout:none;
+  /*-webkit-tap-highlight-color:rgba(0,0,0,0);*/
+}
+
+/*::selection {*/
+/*  !*color: red;*!*/
+/*  background: #c5e1a5;*/
+/*}*/
+
+
 .fadingEffect {
   opacity: 1;
   width: 100%;

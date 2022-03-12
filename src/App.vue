@@ -92,7 +92,7 @@ export default {
   name: "App",
 
   data: () => ({
-    text: "",
+    text: "Lorem ipsum; dolor sit amet, consectetur adipiscing elit, sed do eiusmod. tempor incididunt ut! labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation? ullamco laboris nisi ut, aliquip ex ea commodo consequat. ",
     voice2text: "",
 
     resultError: false,
@@ -108,9 +108,13 @@ export default {
     startX: null,
     xDiff: 0,
     currentTarget: null,
+    allCurrentTargets: [],
 
     // trial information
     trialName: null,
+
+    //gesture
+    lastTapTime: null,
 
   }),
 
@@ -138,66 +142,91 @@ export default {
         if (this.selectedElements.length > 0) {
           this.changeLocationAndSpeak();
 
-          const to_modify_area = document.getElementById("to-modify-area");
-          let clone_modify_area = to_modify_area.cloneNode(true);
-          clone_modify_area.setAttribute(
-              "id",
-              `to-modify-area-${this.selectedNo}`
-          );
+          this.selectedElements.map(ele => {
+            ele.style.backgroundColor = '#c5e1a5'
+            ele.style.padding = '8px'
+            ele.style.margin = 0
+            ele.setAttribute(
+                "id",
+                `to-modify-area-${this.selectedNo}`
+            );
+            ele.addEventListener(
+                "touchstart",
+                this.handleTouchStart,
+                false
+            );
+            ele.addEventListener(
+                "touchmove",
+                this.handleTouchMove,
+                false
+            );
+            ele.addEventListener(
+                "touchend",
+                this.handleTouchEnd,
+                false
+            );
+          })
 
-          clone_modify_area.innerHTML = this.selectedElements
-              .map((ele) => ele.innerHTML)
-              .join(" ");
-
-          clone_modify_area.addEventListener(
-              "touchstart",
-              this.handleTouchStart,
-              false
-          );
-          clone_modify_area.addEventListener(
-              "touchmove",
-              this.handleTouchMove,
-              false
-          );
-          clone_modify_area.addEventListener(
-              "touchend",
-              this.handleTouchEnd,
-              false
-          );
-
+          // const to_modify_area = document.getElementById("to-modify-area");
+          // let clone_modify_area = to_modify_area.cloneNode(true);
+          // clone_modify_area.setAttribute(
+          //     "id",
+          //     `to-modify-area-${this.selectedNo}`
+          // );
+          //
+          // clone_modify_area.innerHTML = this.selectedElements
+          //     .map((ele) => ele.innerHTML)
+          //     .join(" ");
+          //
+          // clone_modify_area.addEventListener(
+          //     "touchstart",
+          //     this.handleTouchStart,
+          //     false
+          // );
+          // clone_modify_area.addEventListener(
+          //     "touchmove",
+          //     this.handleTouchMove,
+          //     false
+          // );
+          // clone_modify_area.addEventListener(
+          //     "touchend",
+          //     this.handleTouchEnd,
+          //     false
+          // );
+          //
           const speaking_area = document.getElementById("speaking_area");
           const cursorElement = document.getElementById("my_cursor");
           cursorElement.parentNode.insertBefore(
-              clone_modify_area,
+              speaking_area,
               cursorElement
           );
           speaking_area.style.removeProperty("display");
-
-          clone_modify_area.style.display = "block";
-          clone_modify_area.parentNode.insertBefore(
-              speaking_area,
-              clone_modify_area.nextElementSibling
-          );
-
-          await this.storeDataLog({
-            type: 'multi_select',
-            content: clone_modify_area.innerHTML,
-            targetId: `to-modify-area-${this.selectedNo}`
-          })
-
-          // remove selected blocks
-          this.selectedElements.forEach((i) => {
-            if (i.previousElementSibling && i.previousElementSibling.tagName === 'HR') {
-              const speaking_area = document.getElementById('speaking_area_lower')
-              const inserted_target = document.getElementById('last-element')
-              speaking_area.style.display = 'none'
-              inserted_target.parentNode.insertBefore(
-                  speaking_area,
-                  inserted_target
-              );
-            }
-            i.parentNode.parentNode.removeChild(i.parentNode)
-          });
+          //
+          // clone_modify_area.style.display = "block";
+          // clone_modify_area.parentNode.insertBefore(
+          //     speaking_area,
+          //     clone_modify_area.nextElementSibling
+          // );
+          //
+          // await this.storeDataLog({
+          //   type: 'multi_select',
+          //   content: clone_modify_area.innerHTML,
+          //   targetId: `to-modify-area-${this.selectedNo}`
+          // })
+          //
+          // // remove selected blocks
+          // this.selectedElements.forEach((i) => {
+          //   if (i.previousElementSibling && i.previousElementSibling.tagName === 'HR') {
+          //     const speaking_area = document.getElementById('speaking_area_lower')
+          //     const inserted_target = document.getElementById('last-element')
+          //     speaking_area.style.display = 'none'
+          //     inserted_target.parentNode.insertBefore(
+          //         speaking_area,
+          //         inserted_target
+          //     );
+          //   }
+          //   i.parentNode.parentNode.removeChild(i.parentNode)
+          // });
         }
       }
     },
@@ -259,75 +288,80 @@ export default {
       return e.touches || e.originalEvent.touches;
     },
     async handleTouchStart(e) {
-      this.currentTarget = document.getElementById(e.target.id);
-      const firstTouch = this.getTouches(e)[0];
-      this.startX = firstTouch.clientX;
+      // this.currentTarget = document.getElementById(e.target.id);
+      if ((e.target.getAttribute('id')).trim().startsWith('to-modify-area')) {
+        this.allCurrentTargets = document.querySelectorAll(`#${e.target.id}`)
+        const firstTouch = this.getTouches(e)[0];
+        this.startX = firstTouch.clientX;
 
-      this.$store.commit("clear_element");
-      this.$store.commit("change_location_speaking");
+        this.$store.commit("clear_element");
+        this.$store.commit("change_location_speaking");
 
-      let selectedSpanElement = null
-      let insertedIndex = 0
-      let targetSibling = null
+        // let selectedSpanElement = null
+        // let insertedIndex = 0
+        const targetSibling = this.allCurrentTargets[this.allCurrentTargets.length - 1]
 
-      const selectedList = this.currentTarget.innerText
-          .split(/(.*?[.,;?])/g)
-          .filter((i) => i && i.trim());
+        // const selectedList = this.currentTarget.innerText
+        //     .split(/(.*?[.,;?])/g)
+        //     .filter((i) => i && i.trim());
 
-      // check if is the last element
-      if (!this.currentTarget.nextElementSibling ||
-          (this.currentTarget.nextElementSibling.tagName === 'DIV' &&
-              this.currentTarget.nextElementSibling.nextElementSibling &&
-              this.currentTarget.nextElementSibling.nextElementSibling.tagName === 'DIV' &&
-              !this.currentTarget.nextElementSibling.nextElementSibling.nextElementSibling
-          )) {
-        // is the last element
-        if (!this.currentTarget.previousElementSibling) {
-          // the first element being selected
-          insertedIndex = 0
-        } else {
-          selectedSpanElement = this.currentTarget.previousElementSibling.firstChild
-          insertedIndex = parseInt(selectedSpanElement.dataset.index) + selectedList.length
-        }
-        targetSibling = document.getElementById('last-element')
-        this.$store.commit("update_current_target_block", null);
-      } else {
-        if (this.currentTarget.nextElementSibling.tagName === 'DIV') {
-          if (this.currentTarget.nextElementSibling.nextElementSibling && this.currentTarget.nextElementSibling.nextElementSibling.firstChild.innerText.length > 1) {
-            selectedSpanElement = this.currentTarget.nextElementSibling.nextElementSibling.firstChild
-          } else selectedSpanElement = this.currentTarget.nextElementSibling.nextElementSibling.nextElementSibling.firstChild
-        } else {
-          if (this.currentTarget.nextElementSibling && this.currentTarget.nextElementSibling.firstChild.innerText.length > 1) {
-            // select other green and come back
-            selectedSpanElement = this.currentTarget.nextElementSibling.firstChild
-          } else selectedSpanElement = this.currentTarget.nextElementSibling.childNodes[2]
-        }
-
-        insertedIndex = parseInt(selectedSpanElement.dataset.index)
-        targetSibling = document.querySelector(
-            `[data-index="${insertedIndex}"]`
-        );
+        // check if is the last element
+        // if (!this.currentTarget.nextElementSibling ||
+        //     (this.currentTarget.nextElementSibling.tagName === 'DIV' &&
+        //         this.currentTarget.nextElementSibling.nextElementSibling &&
+        //         this.currentTarget.nextElementSibling.nextElementSibling.tagName === 'DIV' &&
+        //         !this.currentTarget.nextElementSibling.nextElementSibling.nextElementSibling
+        //     )) {
+        //   // is the last element
+        //   if (!this.currentTarget.previousElementSibling) {
+        //     // the first element being selected
+        //     insertedIndex = 0
+        //   } else {
+        //     selectedSpanElement = this.currentTarget.previousElementSibling.firstChild
+        //     insertedIndex = parseInt(selectedSpanElement.dataset.index) + selectedList.length
+        //   }
+        //   targetSibling = document.getElementById('last-element')
+        //   this.$store.commit("update_current_target_block", null);
+        // } else {
+        //   if (this.currentTarget.nextElementSibling.tagName === 'DIV') {
+        //     if (this.currentTarget.nextElementSibling.nextElementSibling && this.currentTarget.nextElementSibling.nextElementSibling.firstChild.innerText.length > 1) {
+        //       selectedSpanElement = this.currentTarget.nextElementSibling.nextElementSibling.firstChild
+        //     } else selectedSpanElement = this.currentTarget.nextElementSibling.nextElementSibling.nextElementSibling.firstChild
+        //   } else {
+        //     if (this.currentTarget.nextElementSibling && this.currentTarget.nextElementSibling.firstChild.innerText.length > 1) {
+        //       // select other green and come back
+        //       selectedSpanElement = this.currentTarget.nextElementSibling.firstChild
+        //     } else selectedSpanElement = this.currentTarget.nextElementSibling.childNodes[2]
+        //   }
+        //
+        //   insertedIndex = parseInt(selectedSpanElement.dataset.index)
+        //   targetSibling = document.querySelector(
+        //       `[data-index="${insertedIndex}"]`
+        //   );
+        //   this.$store.commit("update_current_target_block", targetSibling);
+        // }
         this.$store.commit("update_current_target_block", targetSibling);
+        this.$store.commit("update_current_index", targetSibling.dataset.index);
+        // console.log('start', targetSibling, insertedIndex)
+
+        const speaking_area = document.getElementById("speaking_area");
+        speaking_area.style.display = "contents";
+        const cursorElement = document.getElementById("my_cursor");
+
+        // if (targetSibling) targetSibling.parentNode.insertBefore(cursorElement, targetSibling);
+
+        cursorElement.parentNode.insertBefore(
+            speaking_area,
+            cursorElement.nextElementSibling
+        );
+        this.lastTapTime = new Date().getTime()
+
+        // await this.storeDataLog({
+        //   type: 'touch_block',
+        //   targetId: e.target.id,
+        //   content: this.currentTarget.innerText,
+        // })
       }
-      this.$store.commit("update_current_index", insertedIndex);
-      // console.log('start', targetSibling, insertedIndex)
-
-      const speaking_area = document.getElementById("speaking_area");
-      speaking_area.style.display = "contents";
-      const cursorElement = document.getElementById("my_cursor");
-
-      if (targetSibling) targetSibling.parentNode.insertBefore(cursorElement, targetSibling);
-
-      cursorElement.parentNode.insertBefore(
-          speaking_area,
-          cursorElement.nextElementSibling
-      );
-
-      await this.storeDataLog({
-        type: 'touch_block',
-        targetId: e.target.id,
-        content: this.currentTarget.innerText,
-      })
     },
     handleTouchMove(e) {
       if (!this.startX) return;
@@ -335,79 +369,131 @@ export default {
       const xUp = e.touches[0].clientX;
       this.xDiff = this.startX - xUp;
 
-      this.currentTarget.style.right = `${this.xDiff}px`;
-      if (this.xDiff > 0) {
-        this.currentTarget.style.backgroundColor = `rgb(${197 + this.xDiff}, ${
-            225 - this.xDiff
-        }, ${165 - this.xDiff})`;
-      }
+      this.allCurrentTargets.forEach(target => {
+        target.style.right = `${this.xDiff}px`;
+        if (this.xDiff > 0) {
+          target.style.backgroundColor = `rgb(${197 + this.xDiff}, ${
+              225 - this.xDiff
+          }, ${165 - this.xDiff})`;
+        }
+      })
+      // this.currentTarget.style.right = `${this.xDiff}px`;
+      // if (this.xDiff > 0) {
+      //   this.currentTarget.style.backgroundColor = `rgb(${197 + this.xDiff}, ${
+      //       225 - this.xDiff
+      //   }, ${165 - this.xDiff})`;
+      // }
     },
     async handleTouchEnd() {
+      const now = new Date().getTime();
+      const timeSince = now - this.lastTapTime;
+
       if (this.xDiff > 180) {
-        this.currentTarget.parentNode.removeChild(this.currentTarget);
-        const removed_list = this.currentTarget.innerText
-            .split(/(.*?[.,;?])/g)
-            .filter((i) => i && i.trim());
+        // this.currentTarget.parentNode.removeChild(this.currentTarget);
+        // const removed_list = this.currentTarget.innerText
+        //     .split(/(.*?[.,;?])/g)
+        //     .filter((i) => i && i.trim());
 
         let temp_semanticList = this.semanticList;
-        removed_list.forEach((i) => {
-          temp_semanticList = temp_semanticList.filter((ele) => ele.text !== i);
-        });
-
-        await this.storeDataLog({
-          type: 'remove_text',
-          content: this.currentTarget.innerText,
-          currentContent: temp_semanticList
-        })
-
-        this.$store.commit("set_semanticList", temp_semanticList);
-        this.$store.commit("clear_element");
-      } else if (this.xDiff < -180) {
-        const insertedList = this.currentTarget.innerText
-            .split(/(.*?[.,;?])/g)
-            .filter((i) => i && i.trim())
-            .map((val) => {
-              return {
-                key: this.uuidv4(),
-                text: val,
-                id: this.uuidv4(),
-                fadeIn: true,
-              };
-            });
-
-        let insertedIndex = parseInt(this.$store.state.current_block_index)
-        let semantic_block = this.semanticList.slice(0);
-        if (!this.currentTarget.nextElementSibling ||
-            (this.currentTarget.nextElementSibling.tagName === 'DIV' &&
-                this.currentTarget.nextElementSibling.nextElementSibling &&
-                this.currentTarget.nextElementSibling.nextElementSibling.tagName === 'DIV' &&
-                !this.currentTarget.nextElementSibling.nextElementSibling.nextElementSibling
-            )) {
-          // is the last element
-          if (!this.currentTarget.previousElementSibling) {
-            // select all
-            semantic_block.push(...insertedList)
-          } else {
-            insertedIndex = insertedIndex + 1
-            semantic_block.splice(parseInt(insertedIndex), 0, ...insertedList);
+        this.allCurrentTargets.forEach(target => {
+          temp_semanticList = temp_semanticList.filter((ele) => {
+            // console.log(ele.text, target.innerText.trim(), ele.text.trim() === target.innerText.trim())
+            return ele.text.trim() !== target.innerText.trim()
+          })
+          if (target.previousElementSibling && target.previousElementSibling.tagName === 'HR') {
+            const speaking_area = document.getElementById('speaking_area_lower')
+            const inserted_target = document.getElementById('last-element')
+            speaking_area.style.display = 'none'
+            inserted_target.parentNode.insertBefore(
+                speaking_area,
+                inserted_target
+            );
           }
-        } else {
-          semantic_block.splice(parseInt(insertedIndex), 0, ...insertedList);
-        }
-
-        await this.storeDataLog({
-          type: 'remain_text',
-          content: this.currentTarget.innerText,
-          currentContent: semantic_block
+          target.parentNode.parentNode.removeChild(target.parentNode)
         })
-        this.currentTarget.parentNode.removeChild(this.currentTarget);
-        await this.$store.commit("update_current_index", parseInt(insertedIndex) + insertedList.length);
-        await this.$store.commit("set_semanticList", semantic_block);
+
+        // await this.storeDataLog({
+        //   type: 'remove_text',
+        //   content: this.currentTarget.innerText,
+        //   currentContent: temp_semanticList
+        // })
+
+        await this.$store.commit("set_semanticList", temp_semanticList);
+        this.$store.commit("clear_element");
+      } else if(timeSince > 600) {
+        this.allCurrentTargets.forEach(target => {
+          target.style.backgroundColor = '#e0e0e0'
+          target.style.padding = '5px'
+          target.style.margin = '0 5px'
+          target.style.right = 0;
+          target.setAttribute('id', this.uuidv4())
+
+          target.removeEventListener(
+              "touchstart",
+              this.handleTouchStart,
+              { passive: true }
+          );
+          target.removeEventListener(
+              "touchmove",
+              this.handleTouchMove,
+              { passive: true }
+          );
+          target.removeEventListener(
+              "touchend",
+              this.handleTouchEnd,
+              { passive: true }
+          );
+        })
+
+        // const insertedList = this.currentTarget.innerText
+        //     .split(/(.*?[.,;?])/g)
+        //     .filter((i) => i && i.trim())
+        //     .map((val) => {
+        //       return {
+        //         key: this.uuidv4(),
+        //         text: val,
+        //         id: this.uuidv4(),
+        //         fadeIn: true,
+        //       };
+        //     });
+
+        // let insertedIndex = parseInt(this.$store.state.current_block_index)
+        // let semantic_block = this.semanticList.slice(0);
+        // if (!this.currentTarget.nextElementSibling ||
+        //     (this.currentTarget.nextElementSibling.tagName === 'DIV' &&
+        //         this.currentTarget.nextElementSibling.nextElementSibling &&
+        //         this.currentTarget.nextElementSibling.nextElementSibling.tagName === 'DIV' &&
+        //         !this.currentTarget.nextElementSibling.nextElementSibling.nextElementSibling
+        //     )) {
+        //   // is the last element
+        //   if (!this.currentTarget.previousElementSibling) {
+        //     // select all
+        //     semantic_block.push(...insertedList)
+        //   } else {
+        //     insertedIndex = insertedIndex + 1
+        //     semantic_block.splice(parseInt(insertedIndex), 0, ...insertedList);
+        //   }
+        // } else {
+        //   semantic_block.splice(parseInt(insertedIndex), 0, ...insertedList);
+        // }
+        //
+        // await this.storeDataLog({
+        //   type: 'remain_text',
+        //   content: this.currentTarget.innerText,
+        //   currentContent: semantic_block
+        // })
+        // this.currentTarget.parentNode.removeChild(this.currentTarget);
+
+        const insertedIndex = this.allCurrentTargets[this.allCurrentTargets.length - 1].dataset.index
+        await this.$store.commit("update_current_index", parseInt(insertedIndex));
+        // await this.$store.commit("set_semanticList", semantic_block);
         // console.log('insert: ', insertedIndex, this.semanticList)
         await this.$store.commit("clear_element");
       } else {
-        this.currentTarget.style.right = 0;
-        this.currentTarget.style.backgroundColor = "rgb(197, 225, 165)";
+        this.allCurrentTargets.forEach(target => {
+          target.style.right = 0;
+          target.style.backgroundColor = "rgb(197, 225, 165)";
+        })
       }
 
       this.startX = null;
