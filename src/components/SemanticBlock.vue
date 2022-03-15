@@ -161,21 +161,18 @@ export default {
       this.$store.commit("clear_element");
       this.$store.commit("change_location_speaking");
       // check if target is to-modify block
-      if (!(e.target.getAttribute('id')).trim().startsWith('to-modify-area'))
+      if (!(e.target.getAttribute('id')).trim().startsWith('to-modify-area')) {
         await this.set_cursor_location(e.target, false);
-
-      const speaking_area = document.getElementById("speaking_area");
-      speaking_area.style.display = "contents";
-      const cursorElement = document.getElementById("my_cursor");
-      cursorElement.parentNode.insertBefore(
-          speaking_area,
-          cursorElement.nextElementSibling
-      );
-
+        const speaking_area = document.getElementById("speaking_area");
+        speaking_area.style.display = "contents";
+        const cursorElement = document.getElementById("my_cursor");
+        cursorElement.parentNode.insertBefore(
+            speaking_area,
+            cursorElement.nextElementSibling
+        );
+        // console.log('start', this.currentTapTarget.dataset.index)
+      }
       this.currentTapTarget = e.target;
-      // console.log('start', this.currentTapTarget.dataset.index)
-
-
       document.getElementById("app").style.overflow = "hidden";
       const firstTouch = this.getTouches(e)[0];
       this.startY = firstTouch.clientY;

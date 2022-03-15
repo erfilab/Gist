@@ -1,7 +1,15 @@
 <template>
   <div>
     <v-app style="position: relative">
-      <v-touch>
+      <v-btn text
+             top center
+
+             @click="baseMode = !baseMode"
+      >
+        <v-icon>mdi-swap-horizontal</v-icon>
+        {{baseMode? 'base':'gist'}}
+      </v-btn>
+      <v-touch v-if="!baseMode">
         <v-main
             style="
             margin: 25px 20px 20px 20px;
@@ -16,6 +24,21 @@
           <div id="last-element"/>
         </v-main>
       </v-touch>
+
+      <v-main
+          v-if="baseMode"
+          contenteditable="true"
+          style="
+            text-align: justify;
+            margin: 25px 20px 20px 20px;
+            text-justify: inter-word;
+          "
+      >
+        <span
+            v-for="text in voice2text" :key="text.id"
+        >{{ text += " " }}</span>
+      </v-main>
+
 
       <v-btn fab dark
              absolute bottom left
@@ -40,7 +63,7 @@
       </v-btn> -->
       <v-btn fab dark
              absolute bottom left
-             style="position: fixed; bottom: 15px; left: 100px"
+             style="position: fixed; bottom: 15px; left: 85px"
              @click="exportText"
       >
         <v-icon>mdi-download</v-icon>
@@ -116,6 +139,9 @@ export default {
     //gesture
     lastTapTime: null,
 
+    //mode
+    baseMode: false,
+    baseText: "",
   }),
 
   components: {
@@ -238,13 +264,28 @@ export default {
     },
 
     voice2text_val() {
-      this.$store.commit("set_new_semantic_content", this.voice2text);
+      if (!this.baseMode) this.$store.commit("set_new_semantic_content", this.voice2text);
+      //   else {
+      //     const myField = document.getElementById('base-text');
+      //     const myValue = this.voice2text[this.voice2text.length - 1]
+      //     if (myField.selectionStart || myField.selectionStart === '0') {
+      //       let startPos = myField.selectionStart;
+      //       let endPos = myField.selectionEnd;
+      //       myField.value = myField.value.substring(0, startPos)
+      //           + myValue
+      //           + myField.value.substring(endPos, myField.value.length);
+      //     } else {
+      //       myField.value += myValue;
+      //     }
+      //
+      //     console.log('base', myField.value, this.voice2text)
+      //   }
     },
   },
 
   methods: {
     async storeDataLog(payload) {
-      await push(ref(db, `trials/${this.trialName}/systemLogs`), {
+      await push(ref(db, `${this.baseMode ? 'base-' : ''}trials/${this.trialName}/systemLogs`), {
         timestamp: new Date().getTime(),
         ...payload,
       }).catch(console.error)
@@ -253,10 +294,17 @@ export default {
     // export the text to the clipboard
     async exportText() {
       let text = "";
-      this.semanticList.forEach(block => {
-        text += block.text.trim()
-        text += " "
-      })
+      if (this.baseMode) {
+        this.voice2text.forEach(v2t => {
+          text += v2t.trim()
+          text += " "
+        })
+      } else {
+        this.semanticList.forEach(block => {
+          text += block.text.trim()
+          text += " "
+        })
+      }
       await navigator.clipboard.writeText(text.trim());
 
       await this.storeDataLog({
@@ -414,7 +462,7 @@ export default {
 
         await this.$store.commit("set_semanticList", temp_semanticList);
         this.$store.commit("clear_element");
-      } else if(timeSince > 600) {
+      } else if (timeSince > 600) {
         this.allCurrentTargets.forEach(target => {
           target.style.backgroundColor = '#e0e0e0'
           target.style.padding = '5px'
@@ -425,17 +473,17 @@ export default {
           target.removeEventListener(
               "touchstart",
               this.handleTouchStart,
-              { passive: true }
+              {passive: true}
           );
           target.removeEventListener(
               "touchmove",
               this.handleTouchMove,
-              { passive: true }
+              {passive: true}
           );
           target.removeEventListener(
               "touchend",
               this.handleTouchEnd,
-              { passive: true }
+              {passive: true}
           );
         })
 
@@ -665,10 +713,12 @@ export default {
               msg.results.map((result) => result.alternatives[0].transcript)
           )
           .reduce((a, b) => a.concat(b), [])
+
+      // console.log('v2t: ', this.voice2text)
     });
 
     this.trialName = `trial-${this.uuidv4()}`
-    const trialRef = ref(db, `trials/` + this.trialName)
+    const trialRef = ref(db, `${this.baseMode ? 'base-' : ''}trials/` + this.trialName)
     socket.emit("joinRoom", this.trialName);
 
     await get(trialRef).then(async (snapshot) => {
@@ -686,7 +736,7 @@ export default {
     await this.$store.commit("update_current_index", 0);
 
     window.onerror = async function (msg, url, line, col, error) {
-      await push(ref(db, `trials/${this.trialName}/errorLogs`), {
+      await push(ref(db, `${this.baseMode ? 'base-' : ''}trials/${this.trialName}/errorLogs`), {
         timestamp: new Date().getTime(),
         errorMsg: msg,
         errorUrl: url,
