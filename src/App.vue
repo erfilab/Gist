@@ -1,15 +1,25 @@
 <template>
   <div>
     <v-app style="position: relative">
-      <v-btn text
-             top center
-
-             @click="baseMode = !baseMode"
+      <v-btn-toggle
+          tile
+          group
+          style="margin: 0 auto;"
       >
-        <v-icon>mdi-swap-horizontal</v-icon>
-        {{baseMode? 'base':'gist'}}
-      </v-btn>
-      <v-touch v-if="!baseMode">
+        <v-btn @click="() => {this.baseMode = false; this.postAnalMode = false}">
+          Gist
+          <v-icon right>mdi-alpha-g-box</v-icon>
+        </v-btn>
+        <v-btn @click="() => {this.baseMode = true; this.postAnalMode = false}">
+          Baseline
+          <v-icon right>mdi-alpha-b-box</v-icon>
+        </v-btn>
+        <v-btn @click="() => {this.baseMode = false; this.postAnalMode = true}">
+          Analysis
+          <v-icon right>mdi-alpha-a-box</v-icon>
+        </v-btn>
+      </v-btn-toggle>
+      <v-touch v-if="!baseMode && !postAnalMode">
         <v-main
             style="
             margin: 25px 20px 20px 20px;
@@ -26,7 +36,26 @@
       </v-touch>
 
       <v-main
-          v-if="baseMode"
+          v-if="baseMode && !postAnalMode"
+          contenteditable="true"
+          style="
+            text-align: justify;
+
+            margin: 25px 20px 20px 20px;
+            text-justify: inter-word;
+          "
+      >
+        <v-textarea
+            @focus="focus"
+            @click="select"
+            id="base-textarea"
+            v-model="baseText"
+            ref="input"
+        >
+        </v-textarea>
+      </v-main>
+      <v-main
+          v-if="postAnalMode && !baseMode"
           contenteditable="true"
           style="
             text-align: justify;
@@ -34,11 +63,12 @@
             text-justify: inter-word;
           "
       >
-        <span
-            v-for="text in voice2text" :key="text.id"
-        >{{ text += " " }}</span>
+        <v-textarea
+            id="post-anal-textarea"
+            v-model="postAnalText"
+        >
+        </v-textarea>
       </v-main>
-
 
       <v-btn fab dark
              absolute bottom left
@@ -139,9 +169,18 @@ export default {
     //gesture
     lastTapTime: null,
 
-    //mode
+
+    // post analysis mode
+    postAnalMode: false,
+    postAnalText: "",
+    // base mode
     baseMode: false,
     baseText: "",
+    interimResult: "",
+    isTransFinal: false,
+    selectionEnd: 0,
+    previousLength: 0,
+    prevText: "",
   }),
 
   components: {
@@ -163,6 +202,7 @@ export default {
   },
 
   watch: {
+    // async
     async selectedNo() {
       if (this.selectedNo >= 1) {
         if (this.selectedElements.length > 0) {
@@ -256,7 +296,6 @@ export default {
         }
       }
     },
-
     newSemanticContent(newVal, oldVal) {
       if (oldVal && !newVal) {
         this.changeLocationAndSpeak();
@@ -265,25 +304,24 @@ export default {
 
     voice2text_val() {
       if (!this.baseMode) this.$store.commit("set_new_semantic_content", this.voice2text);
-      //   else {
-      //     const myField = document.getElementById('base-text');
-      //     const myValue = this.voice2text[this.voice2text.length - 1]
-      //     if (myField.selectionStart || myField.selectionStart === '0') {
-      //       let startPos = myField.selectionStart;
-      //       let endPos = myField.selectionEnd;
-      //       myField.value = myField.value.substring(0, startPos)
-      //           + myValue
-      //           + myField.value.substring(endPos, myField.value.length);
-      //     } else {
-      //       myField.value += myValue;
-      //     }
-      //
-      //     console.log('base', myField.value, this.voice2text)
-      //   }
     },
+
+    interimResult() {
+      // const inputElement = this.$refs.baseText.querySelector('input')
+      // const inputElement = document.getElementById('base-textarea')
+
+    }
   },
 
   methods: {
+    focus(e) {
+      console.log('focus: ', e)
+    },
+    select(e) {
+      console.log('click select: ', e)
+      this.selectionEnd = e.target.selectionEnd
+      this.prevText = this.baseText.substring(this.selectionEnd + this.interimResult.length)
+    },
     async storeDataLog(payload) {
       await push(ref(db, `${this.baseMode ? 'base-' : ''}trials/${this.trialName}/systemLogs`), {
         timestamp: new Date().getTime(),
@@ -460,6 +498,17 @@ export default {
         //   currentContent: temp_semanticList
         // })
 
+        const insertedIndex = parseInt(this.allCurrentTargets[this.allCurrentTargets.length - 1].dataset.index) - this.allCurrentTargets.length + 1
+        await this.$store.commit("update_current_index", insertedIndex);
+        const targetSibling = document.querySelector(
+            `[data-index="${parseInt(this.allCurrentTargets[this.allCurrentTargets.length - 1].dataset.index) + 1}"]`
+        );
+        this.$store.commit("update_current_target_block", targetSibling);
+        const cursorElement = document.getElementById("my_cursor");
+        targetSibling.parentNode.insertBefore(
+            cursorElement,
+            targetSibling
+        );
         await this.$store.commit("set_semanticList", temp_semanticList);
         this.$store.commit("clear_element");
       } else if (timeSince > 600) {
@@ -661,18 +710,9 @@ export default {
     getFinalAndLatestInterimResult() {
       const final = this.getFinalResults();
       const interim = this.getCurrentInterimResult();
+
       if (interim) {
         final.push(interim);
-      } else {
-        const finalResults = this.messages
-            .map((msg) =>
-                msg.results.map((result) => result.alternatives[0].transcript)
-            )
-            .reduce((a, b) => a.concat(b), [])
-        this.storeDataLog({
-          type: `final_transcript`,
-          content: finalResults
-        })
       }
       return final;
     },
@@ -705,16 +745,47 @@ export default {
     );
 
     socket.on("TRANSCRIPT", async (data) => {
-      this.formattedMessages = this.formattedMessages.concat(data);
-      this.messages = this.getFinalAndLatestInterimResult();
+      if (this.baseMode) {
+        this.interimResult = data.results[0].alternatives[0].transcript;
+        this.isTransFinal = data.results[0].isFinal;
 
-      this.voice2text = this.messages
-          .map((msg) =>
-              msg.results.map((result) => result.alternatives[0].transcript)
-          )
-          .reduce((a, b) => a.concat(b), [])
+        const textarea = this.$refs['input'].$el.querySelector('input:not([type=hidden]),textarea:not([type=hidden])')
+        const selStart = textarea.selectionStart
+        const selEnd = textarea.selectionEnd
 
-      // console.log('v2t: ', this.voice2text)
+        if (window.getSelection && selStart !== selEnd) {
+          //user's selection
+          // let selection = window.getSelection()
+          // selection.deleteFromDocument()
+          this.prevText = this.baseText.substring(selEnd)
+          this.baseText =
+              this.baseText.substring(0, selStart) + this.baseText.substring(selEnd)
+        }
+
+
+        console.log('prev: ', this.prevText)
+        this.baseText =
+            this.baseText.substring(0, this.selectionEnd) + ' ' + this.interimResult + ' '
+            + this.prevText
+
+        if (this.isTransFinal) {
+          this.selectionEnd += (this.interimResult.length + 1)
+          await this.storeDataLog({
+            type: `final_transcript`,
+            content: this.interimResult
+          })
+          this.$nextTick(() => textarea.setSelectionRange(this.selectionEnd, this.selectionEnd))
+        }
+        this.interimResult = ""
+      } else {
+        this.formattedMessages = this.formattedMessages.concat(data);
+        this.messages = this.getFinalAndLatestInterimResult();
+        this.voice2text = this.messages
+            .map((msg) =>
+                msg.results.map((result) => result.alternatives[0].transcript)
+            )
+            .reduce((a, b) => a.concat(b), [])
+      }
     });
 
     this.trialName = `trial-${this.uuidv4()}`
@@ -755,5 +826,13 @@ export default {
 <style lang="scss">
 #app {
   overflow-y: auto;
+}
+
+#base-textarea {
+  height: 100vh;
+}
+
+#post-anal-textarea {
+  height: 100vh
 }
 </style>
