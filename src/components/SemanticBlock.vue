@@ -23,6 +23,9 @@ import {mapGetters} from "vuex";
 import {db} from '@/plugins/firebase.js';
 import {push, ref} from "firebase/database";
 
+
+let timer;
+
 export default {
   store,
   name: "SemanticBlock",
@@ -38,6 +41,7 @@ export default {
 
       clickTimer: null,
       clicks: 0,
+      touching: false,
     };
   },
   computed: {
@@ -158,10 +162,10 @@ export default {
       return e.touches || e.originalEvent.touches;
     },
     async handleTouchStart(e) {
-      this.$store.commit("clear_element");
-      this.$store.commit("change_location_speaking");
-      // check if target is to-modify block
       if (!(e.target.getAttribute('id')).trim().startsWith('to-modify-area')) {
+        this.$store.commit("clear_element");
+        this.$store.commit("change_location_speaking");
+        this.touching = true
         await this.set_cursor_location(e.target, false);
         const speaking_area = document.getElementById("speaking_area");
         speaking_area.style.display = "contents";
@@ -170,18 +174,37 @@ export default {
             speaking_area,
             cursorElement.nextElementSibling
         );
-        // console.log('start', this.currentTapTarget.dataset.index)
+
+        timer = setTimeout(() => {
+          if (!this.yDiff && !this.currentTapTarget && this.touching) {
+            const canVibrate = window.navigator.vibrate
+            if (canVibrate) window.navigator.vibrate(100)
+            this.touchStartEvent(e)
+          }
+        }, 300)
       }
-      this.currentTapTarget = e.target;
+    },
+    async touchStartEvent(e) {
       document.getElementById("app").style.overflow = "hidden";
+      this.currentTapTarget = e.target;
       const firstTouch = this.getTouches(e)[0];
       this.startY = firstTouch.clientY;
+
+      if (
+          this.currentTapTarget.innerText.length &&
+          (!this.selectedElements.length ||
+              this.currentTapTarget.innerText !==
+              this.selectedElements.slice(-1)[0].innerText)
+      ) {
+        this.currentTapTarget.style.backgroundColor = "yellow";
+        this.$store.commit("add_element", this.currentTapTarget);
+      }
     },
     async handleTouchMove(e) {
       if (!this.startY) return;
 
       const yUp = e.touches[0].clientY;
-      if (Math.abs(this.startY - yUp - this.yDiff) > 25) {
+      if (Math.abs(this.startY - yUp - this.yDiff) > 18) {
         if (this.startY - yUp > this.yDiff) {
           if (!this.currentTapTarget.parentNode.nextElementSibling || this.currentTapTarget.parentNode.nextElementSibling.id) {
             this.currentTapTarget.style.backgroundColor = "#E0E0E0";
@@ -225,6 +248,9 @@ export default {
       }
     },
     handleTouchEnd() {
+      if (timer) clearTimeout(timer)
+      this.touching = false
+
       document.getElementById("app").style.overflow = "auto";
       // this.currentTapTarget.removeEventListener(
       //   "touchstart",
@@ -242,7 +268,7 @@ export default {
       //   this.handleTouchEnd,
       //   true
       // );
-      if (this.yDiff) {
+      if (this.yDiff && Math.abs(this.yDiff) > 18) {
         this.$store.commit(
             "update_current_index",
             parseInt(this.currentTapTarget.dataset.index)
@@ -261,7 +287,8 @@ export default {
         }
         // console.log('tgs: ', targetSibling, parseInt(this.currentTapTarget.dataset.index))
       }
-      this.$store.commit("add_selectedNo", 1);
+      if (this.selectedElements.length)
+        this.$store.commit("add_selectedNo", 1);
 
       this.startY = null;
       this.yDiff = 0;

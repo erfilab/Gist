@@ -87,17 +87,17 @@
         <v-icon>mdi-download</v-icon>
       </v-btn>
 
-<!--      <v-btn-->
-<!--          fab-->
-<!--          dark-->
-<!--          absolute-->
-<!--          bottom-->
-<!--          left-->
-<!--          style="position: fixed; bottom: 15px; left: 142px"-->
-<!--          @click="deleteText"-->
-<!--      >-->
-<!--        <v-icon>mdi-close</v-icon>-->
-<!--      </v-btn>-->
+      <!--      <v-btn-->
+      <!--          fab-->
+      <!--          dark-->
+      <!--          absolute-->
+      <!--          bottom-->
+      <!--          left-->
+      <!--          style="position: fixed; bottom: 15px; left: 142px"-->
+      <!--          @click="deleteText"-->
+      <!--      >-->
+      <!--        <v-icon>mdi-close</v-icon>-->
+      <!--      </v-btn>-->
 
       <v-btn fab dark
              absolute bottom right
@@ -140,13 +140,14 @@ import {ref, set, get, push} from 'firebase/database';
 
 const nowDay = new Date().toISOString().slice(0, 10);
 let socket = null;
-let context, processor, audioContext, globalStream, audioInput;
+let context, processor, audioContext, globalStream, audioInput, timer;
 
 export default {
   name: "App",
 
   data: () => ({
-    text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. In diam arcu, aliquet a tellus feugiat, tincidunt maximus sapien. Integer urna eros, blandit non lacinia et, feugiat a elit. Mauris in sapien quis velit ultricies ultricies. Nulla varius mi in ligula fermentum, ac gravida dolor hendrerit. Phasellus fringilla at odio eget facilisis. ",
+    // text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. In diam arcu, aliquet a tellus feugiat, tincidunt maximus sapien. Integer urna eros, blandit non lacinia et, feugiat a elit. Mauris in sapien quis velit ultricies ultricies. Nulla varius mi in ligula fermentum, ac gravida dolor hendrerit. Phasellus fringilla at odio eget facilisis. ",
+    text: "",
     voice2text: "",
 
     resultError: false,
@@ -177,7 +178,8 @@ export default {
     postAnalText: "",
     // base mode
     baseMode: false,
-    baseText: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. In diam arcu, aliquet a tellus feugiat, tincidunt maximus sapien. Integer urna eros, blandit non lacinia et, feugiat a elit. Mauris in sapien quis velit ultricies ultricies. Nulla varius mi in ligula fermentum, ac gravida dolor hendrerit. Phasellus fringilla at odio eget facilisis. ",
+    // baseText: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. In diam arcu, aliquet a tellus feugiat, tincidunt maximus sapien. Integer urna eros, blandit non lacinia et, feugiat a elit. Mauris in sapien quis velit ultricies ultricies. Nulla varius mi in ligula fermentum, ac gravida dolor hendrerit. Phasellus fringilla at odio eget facilisis. ",
+    baseText: "",
     interimResult: "",
     isTransFinal: false,
     selectionEnd: 0,
@@ -434,6 +436,12 @@ export default {
         // );
         this.lastTapTime = new Date().getTime()
 
+
+        timer = setTimeout(() => {
+          const canVibrate = window.navigator.vibrate
+          if (canVibrate) window.navigator.vibrate(100)
+        }, 480)
+
         // await this.storeDataLog({
         //   type: 'touch_block',
         //   targetId: e.target.id,
@@ -456,16 +464,10 @@ export default {
           }, ${165 - this.xDiff})`;
         }
       })
-      // this.currentTarget.style.right = `${this.xDiff}px`;
-      // if (this.xDiff > 0) {
-      //   this.currentTarget.style.backgroundColor = `rgb(${197 + this.xDiff}, ${
-      //       225 - this.xDiff
-      //   }, ${165 - this.xDiff})`;
-      // }
     },
     async handleTouchEnd() {
-      // const now = new Date().getTime();
-      // const timeSince = now - this.lastTapTime;
+      const now = new Date().getTime();
+      const timeSince = now - this.lastTapTime;
 
       if (this.xDiff > 100 || this.screenX < 10) {
         // this.currentTarget.parentNode.removeChild(this.currentTarget);
@@ -474,6 +476,23 @@ export default {
         //     .filter((i) => i && i.trim());
 
         let temp_semanticList = this.semanticList;
+        const cursorElement = document.getElementById("my_cursor");
+        const speaking_area = document.getElementById('speaking_area')
+        speaking_area.style.display = 'none'
+        const targetSibling = document.querySelector(
+            `[data-index="${parseInt(this.allCurrentTargets[this.allCurrentTargets.length - 1].dataset.index) + 1}"]`
+        );
+
+        targetSibling.parentNode.insertBefore(
+            cursorElement,
+            targetSibling
+        );
+
+        cursorElement.parentNode.insertBefore(
+            speaking_area,
+            cursorElement.nextElementSibling
+        );
+
         this.allCurrentTargets.forEach(target => {
           temp_semanticList = temp_semanticList.filter((ele) => {
             // console.log(ele.text, target.innerText.trim(), ele.text.trim() === target.innerText.trim())
@@ -499,89 +518,79 @@ export default {
 
         const insertedIndex = parseInt(this.allCurrentTargets[this.allCurrentTargets.length - 1].dataset.index) - this.allCurrentTargets.length + 1
         await this.$store.commit("update_current_index", insertedIndex);
-        const targetSibling = document.querySelector(
-            `[data-index="${parseInt(this.allCurrentTargets[this.allCurrentTargets.length - 1].dataset.index) + 1}"]`
-        );
         this.$store.commit("update_current_target_block", targetSibling);
-        const cursorElement = document.getElementById("my_cursor");
-        targetSibling.parentNode.insertBefore(
-            cursorElement,
-            targetSibling
-        );
         await this.$store.commit("set_semanticList", temp_semanticList);
         this.$store.commit("clear_element");
-      }
-          // else if (timeSince > 600) {
-          //   this.allCurrentTargets.forEach(target => {
-          //     target.style.backgroundColor = '#e0e0e0'
-          //     target.style.padding = '5px'
-          //     target.style.margin = '0 5px'
-          //     target.style.right = 0;
-          //     target.setAttribute('id', this.uuidv4())
-          //
-          //     target.removeEventListener(
-          //         "touchstart",
-          //         this.handleTouchStart,
-          //         {passive: true}
-          //     );
-          //     target.removeEventListener(
-          //         "touchmove",
-          //         this.handleTouchMove,
-          //         {passive: true}
-          //     );
-          //     target.removeEventListener(
-          //         "touchend",
-          //         this.handleTouchEnd,
-          //         {passive: true}
-          //     );
-          //   })
-          //
-          //   // const insertedList = this.currentTarget.innerText
-          //   //     .split(/(.*?[.,;?])/g)
-          //   //     .filter((i) => i && i.trim())
-          //   //     .map((val) => {
-          //   //       return {
-          //   //         key: this.uuidv4(),
-          //   //         text: val,
-          //   //         id: this.uuidv4(),
-          //   //         fadeIn: true,
-          //   //       };
-          //   //     });
-          //
-          //   // let insertedIndex = parseInt(this.$store.state.current_block_index)
-          //   // let semantic_block = this.semanticList.slice(0);
-          //   // if (!this.currentTarget.nextElementSibling ||
-          //   //     (this.currentTarget.nextElementSibling.tagName === 'DIV' &&
-          //   //         this.currentTarget.nextElementSibling.nextElementSibling &&
-          //   //         this.currentTarget.nextElementSibling.nextElementSibling.tagName === 'DIV' &&
-          //   //         !this.currentTarget.nextElementSibling.nextElementSibling.nextElementSibling
-          //   //     )) {
-          //   //   // is the last element
-          //   //   if (!this.currentTarget.previousElementSibling) {
-          //   //     // select all
-          //   //     semantic_block.push(...insertedList)
-          //   //   } else {
-          //   //     insertedIndex = insertedIndex + 1
-          //   //     semantic_block.splice(parseInt(insertedIndex), 0, ...insertedList);
-          //   //   }
-          //   // } else {
-          //   //   semantic_block.splice(parseInt(insertedIndex), 0, ...insertedList);
-          //   // }
-          //   //
-          //   // await this.storeDataLog({
-          //   //   type: 'remain_text',
-          //   //   content: this.currentTarget.innerText,
-          //   //   currentContent: semantic_block
-          //   // })
-          //   // this.currentTarget.parentNode.removeChild(this.currentTarget);
-          //
-          //   const insertedIndex = this.allCurrentTargets[this.allCurrentTargets.length - 1].dataset.index
-          //   await this.$store.commit("update_current_index", parseInt(insertedIndex));
-          //   // await this.$store.commit("set_semanticList", semantic_block);
-          //   // console.log('insert: ', insertedIndex, this.semanticList)
-          //   await this.$store.commit("clear_element");
-      // }
-      else {
+      } else if (timeSince > 500) {
+        this.allCurrentTargets.forEach(target => {
+          target.style.backgroundColor = '#e0e0e0'
+          target.style.padding = '5px'
+          target.style.margin = '0 5px'
+          target.style.right = 0;
+          target.setAttribute('id', this.uuidv4())
+
+          target.removeEventListener(
+              "touchstart",
+              this.handleTouchStart,
+              {passive: true}
+          );
+          target.removeEventListener(
+              "touchmove",
+              this.handleTouchMove,
+              {passive: true}
+          );
+          target.removeEventListener(
+              "touchend",
+              this.handleTouchEnd,
+              {passive: true}
+          );
+        })
+
+        // const insertedList = this.currentTarget.innerText
+        //     .split(/(.*?[.,;?])/g)
+        //     .filter((i) => i && i.trim())
+        //     .map((val) => {
+        //       return {
+        //         key: this.uuidv4(),
+        //         text: val,
+        //         id: this.uuidv4(),
+        //         fadeIn: true,
+        //       };
+        //     });
+
+        // let insertedIndex = parseInt(this.$store.state.current_block_index)
+        // let semantic_block = this.semanticList.slice(0);
+        // if (!this.currentTarget.nextElementSibling ||
+        //     (this.currentTarget.nextElementSibling.tagName === 'DIV' &&
+        //         this.currentTarget.nextElementSibling.nextElementSibling &&
+        //         this.currentTarget.nextElementSibling.nextElementSibling.tagName === 'DIV' &&
+        //         !this.currentTarget.nextElementSibling.nextElementSibling.nextElementSibling
+        //     )) {
+        //   // is the last element
+        //   if (!this.currentTarget.previousElementSibling) {
+        //     // select all
+        //     semantic_block.push(...insertedList)
+        //   } else {
+        //     insertedIndex = insertedIndex + 1
+        //     semantic_block.splice(parseInt(insertedIndex), 0, ...insertedList);
+        //   }
+        // } else {
+        //   semantic_block.splice(parseInt(insertedIndex), 0, ...insertedList);
+        // }
+        //
+        // await this.storeDataLog({
+        //   type: 'remain_text',
+        //   content: this.currentTarget.innerText,
+        //   currentContent: semantic_block
+        // })
+        // this.currentTarget.parentNode.removeChild(this.currentTarget);
+
+        const insertedIndex = this.allCurrentTargets[this.allCurrentTargets.length - 1].dataset.index
+        await this.$store.commit("update_current_index", parseInt(insertedIndex) + 1);
+        // await this.$store.commit("set_semanticList", semantic_block);
+        // console.log('insert: ', insertedIndex, this.semanticList)
+        await this.$store.commit("clear_element");
+      } else {
         this.allCurrentTargets.forEach(target => {
           target.style.right = 0;
           target.style.backgroundColor = "rgb(197, 225, 165)";
@@ -592,6 +601,7 @@ export default {
       this.xDiff = 0;
       this.screenX = 9999;
       this.currentTarget = null;
+      if (timer) clearTimeout(timer)
     },
     // async deleteText() {
     //   let temp_semanticList = this.semanticList;
