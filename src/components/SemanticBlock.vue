@@ -251,7 +251,7 @@ export default {
             `[data-index="${parseInt(this.currentTapTarget.dataset.index)}"]`
         );
 
-        if (!this.currentTapTarget.parentNode.nextElementSibling) {
+        if (!this.currentTapTarget.parentNode.nextElementSibling && this.currentTapTarget.innerText.trim() === (this.selectedElements[this.selectedElements.length - 1]).innerText.trim()) {
           const inserted_target = document.getElementById('last-element')
           this.$store.commit("update_current_target_block", null);
           this.set_cursor_location(inserted_target, true);

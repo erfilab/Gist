@@ -46,7 +46,6 @@
           "
       >
         <v-textarea
-            @focus="focus"
             @click="select"
             id="base-textarea"
             v-model="baseText"
@@ -80,24 +79,26 @@
         </v-icon>
       </v-btn>
 
-      <!-- <v-btn
-        fab
-        dark
-        absolute
-        bottom
-        left
-        style="position: fixed; bottom: 15px; left: 46px"
-        @click="deleteText"
-      >
-        <v-icon>mdi-close</v-icon>
-      </v-btn> -->
       <v-btn fab dark
              absolute bottom left
-             style="position: fixed; bottom: 15px; left: 85px"
+             style="position: fixed; bottom: 15px; left: 83px"
              @click="exportText"
       >
         <v-icon>mdi-download</v-icon>
       </v-btn>
+
+<!--      <v-btn-->
+<!--          fab-->
+<!--          dark-->
+<!--          absolute-->
+<!--          bottom-->
+<!--          left-->
+<!--          style="position: fixed; bottom: 15px; left: 142px"-->
+<!--          @click="deleteText"-->
+<!--      >-->
+<!--        <v-icon>mdi-close</v-icon>-->
+<!--      </v-btn>-->
+
       <v-btn fab dark
              absolute bottom right
              :color="isStreaming ? 'green' : 'grey'"
@@ -145,7 +146,7 @@ export default {
   name: "App",
 
   data: () => ({
-    text: "",
+    text: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. In diam arcu, aliquet a tellus feugiat, tincidunt maximus sapien. Integer urna eros, blandit non lacinia et, feugiat a elit. Mauris in sapien quis velit ultricies ultricies. Nulla varius mi in ligula fermentum, ac gravida dolor hendrerit. Phasellus fringilla at odio eget facilisis. ",
     voice2text: "",
 
     resultError: false,
@@ -160,6 +161,7 @@ export default {
 
     startX: null,
     xDiff: 0,
+    screenX: 9999,
     currentTarget: null,
     allCurrentTargets: [],
 
@@ -175,7 +177,7 @@ export default {
     postAnalText: "",
     // base mode
     baseMode: false,
-    baseText: "",
+    baseText: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. In diam arcu, aliquet a tellus feugiat, tincidunt maximus sapien. Integer urna eros, blandit non lacinia et, feugiat a elit. Mauris in sapien quis velit ultricies ultricies. Nulla varius mi in ligula fermentum, ac gravida dolor hendrerit. Phasellus fringilla at odio eget facilisis. ",
     interimResult: "",
     isTransFinal: false,
     selectionEnd: 0,
@@ -314,11 +316,7 @@ export default {
   },
 
   methods: {
-    focus(e) {
-      console.log('focus: ', e)
-    },
     select(e) {
-      console.log('click select: ', e)
       this.selectionEnd = e.target.selectionEnd
       this.prevText = this.baseText.substring(this.selectionEnd + this.interimResult.length)
     },
@@ -424,16 +422,16 @@ export default {
         this.$store.commit("update_current_index", targetSibling.dataset.index);
         // console.log('start', targetSibling, insertedIndex)
 
-        const speaking_area = document.getElementById("speaking_area");
-        speaking_area.style.display = "contents";
-        const cursorElement = document.getElementById("my_cursor");
+        // const speaking_area = document.getElementById("speaking_area");
+        // speaking_area.style.display = "contents";
+        // const cursorElement = document.getElementById("my_cursor");
 
         // if (targetSibling) targetSibling.parentNode.insertBefore(cursorElement, targetSibling);
 
-        cursorElement.parentNode.insertBefore(
-            speaking_area,
-            cursorElement.nextElementSibling
-        );
+        // cursorElement.parentNode.insertBefore(
+        //     speaking_area,
+        //     cursorElement.nextElementSibling
+        // );
         this.lastTapTime = new Date().getTime()
 
         // await this.storeDataLog({
@@ -448,6 +446,7 @@ export default {
 
       const xUp = e.touches[0].clientX;
       this.xDiff = this.startX - xUp;
+      this.screenX = e.touches[0].screenX;
 
       this.allCurrentTargets.forEach(target => {
         target.style.right = `${this.xDiff}px`;
@@ -465,10 +464,10 @@ export default {
       // }
     },
     async handleTouchEnd() {
-      const now = new Date().getTime();
-      const timeSince = now - this.lastTapTime;
+      // const now = new Date().getTime();
+      // const timeSince = now - this.lastTapTime;
 
-      if (this.xDiff > 180) {
+      if (this.xDiff > 100 || this.screenX < 10) {
         // this.currentTarget.parentNode.removeChild(this.currentTarget);
         // const removed_list = this.currentTarget.innerText
         //     .split(/(.*?[.,;?])/g)
@@ -511,76 +510,78 @@ export default {
         );
         await this.$store.commit("set_semanticList", temp_semanticList);
         this.$store.commit("clear_element");
-      } else if (timeSince > 600) {
-        this.allCurrentTargets.forEach(target => {
-          target.style.backgroundColor = '#e0e0e0'
-          target.style.padding = '5px'
-          target.style.margin = '0 5px'
-          target.style.right = 0;
-          target.setAttribute('id', this.uuidv4())
-
-          target.removeEventListener(
-              "touchstart",
-              this.handleTouchStart,
-              {passive: true}
-          );
-          target.removeEventListener(
-              "touchmove",
-              this.handleTouchMove,
-              {passive: true}
-          );
-          target.removeEventListener(
-              "touchend",
-              this.handleTouchEnd,
-              {passive: true}
-          );
-        })
-
-        // const insertedList = this.currentTarget.innerText
-        //     .split(/(.*?[.,;?])/g)
-        //     .filter((i) => i && i.trim())
-        //     .map((val) => {
-        //       return {
-        //         key: this.uuidv4(),
-        //         text: val,
-        //         id: this.uuidv4(),
-        //         fadeIn: true,
-        //       };
-        //     });
-
-        // let insertedIndex = parseInt(this.$store.state.current_block_index)
-        // let semantic_block = this.semanticList.slice(0);
-        // if (!this.currentTarget.nextElementSibling ||
-        //     (this.currentTarget.nextElementSibling.tagName === 'DIV' &&
-        //         this.currentTarget.nextElementSibling.nextElementSibling &&
-        //         this.currentTarget.nextElementSibling.nextElementSibling.tagName === 'DIV' &&
-        //         !this.currentTarget.nextElementSibling.nextElementSibling.nextElementSibling
-        //     )) {
-        //   // is the last element
-        //   if (!this.currentTarget.previousElementSibling) {
-        //     // select all
-        //     semantic_block.push(...insertedList)
-        //   } else {
-        //     insertedIndex = insertedIndex + 1
-        //     semantic_block.splice(parseInt(insertedIndex), 0, ...insertedList);
-        //   }
-        // } else {
-        //   semantic_block.splice(parseInt(insertedIndex), 0, ...insertedList);
-        // }
-        //
-        // await this.storeDataLog({
-        //   type: 'remain_text',
-        //   content: this.currentTarget.innerText,
-        //   currentContent: semantic_block
-        // })
-        // this.currentTarget.parentNode.removeChild(this.currentTarget);
-
-        const insertedIndex = this.allCurrentTargets[this.allCurrentTargets.length - 1].dataset.index
-        await this.$store.commit("update_current_index", parseInt(insertedIndex));
-        // await this.$store.commit("set_semanticList", semantic_block);
-        // console.log('insert: ', insertedIndex, this.semanticList)
-        await this.$store.commit("clear_element");
-      } else {
+      }
+          // else if (timeSince > 600) {
+          //   this.allCurrentTargets.forEach(target => {
+          //     target.style.backgroundColor = '#e0e0e0'
+          //     target.style.padding = '5px'
+          //     target.style.margin = '0 5px'
+          //     target.style.right = 0;
+          //     target.setAttribute('id', this.uuidv4())
+          //
+          //     target.removeEventListener(
+          //         "touchstart",
+          //         this.handleTouchStart,
+          //         {passive: true}
+          //     );
+          //     target.removeEventListener(
+          //         "touchmove",
+          //         this.handleTouchMove,
+          //         {passive: true}
+          //     );
+          //     target.removeEventListener(
+          //         "touchend",
+          //         this.handleTouchEnd,
+          //         {passive: true}
+          //     );
+          //   })
+          //
+          //   // const insertedList = this.currentTarget.innerText
+          //   //     .split(/(.*?[.,;?])/g)
+          //   //     .filter((i) => i && i.trim())
+          //   //     .map((val) => {
+          //   //       return {
+          //   //         key: this.uuidv4(),
+          //   //         text: val,
+          //   //         id: this.uuidv4(),
+          //   //         fadeIn: true,
+          //   //       };
+          //   //     });
+          //
+          //   // let insertedIndex = parseInt(this.$store.state.current_block_index)
+          //   // let semantic_block = this.semanticList.slice(0);
+          //   // if (!this.currentTarget.nextElementSibling ||
+          //   //     (this.currentTarget.nextElementSibling.tagName === 'DIV' &&
+          //   //         this.currentTarget.nextElementSibling.nextElementSibling &&
+          //   //         this.currentTarget.nextElementSibling.nextElementSibling.tagName === 'DIV' &&
+          //   //         !this.currentTarget.nextElementSibling.nextElementSibling.nextElementSibling
+          //   //     )) {
+          //   //   // is the last element
+          //   //   if (!this.currentTarget.previousElementSibling) {
+          //   //     // select all
+          //   //     semantic_block.push(...insertedList)
+          //   //   } else {
+          //   //     insertedIndex = insertedIndex + 1
+          //   //     semantic_block.splice(parseInt(insertedIndex), 0, ...insertedList);
+          //   //   }
+          //   // } else {
+          //   //   semantic_block.splice(parseInt(insertedIndex), 0, ...insertedList);
+          //   // }
+          //   //
+          //   // await this.storeDataLog({
+          //   //   type: 'remain_text',
+          //   //   content: this.currentTarget.innerText,
+          //   //   currentContent: semantic_block
+          //   // })
+          //   // this.currentTarget.parentNode.removeChild(this.currentTarget);
+          //
+          //   const insertedIndex = this.allCurrentTargets[this.allCurrentTargets.length - 1].dataset.index
+          //   await this.$store.commit("update_current_index", parseInt(insertedIndex));
+          //   // await this.$store.commit("set_semanticList", semantic_block);
+          //   // console.log('insert: ', insertedIndex, this.semanticList)
+          //   await this.$store.commit("clear_element");
+      // }
+      else {
         this.allCurrentTargets.forEach(target => {
           target.style.right = 0;
           target.style.backgroundColor = "rgb(197, 225, 165)";
@@ -589,8 +590,48 @@ export default {
 
       this.startX = null;
       this.xDiff = 0;
+      this.screenX = 9999;
       this.currentTarget = null;
     },
+    // async deleteText() {
+    //   let temp_semanticList = this.semanticList;
+    //   this.selectedElements.forEach(target => {
+    //     console.log('tar', target)
+    //     temp_semanticList = temp_semanticList.filter((ele) => {
+    //       return ele.text.trim() !== target.innerText.trim()
+    //     })
+    //     if (target.previousElementSibling && target.previousElementSibling.tagName === 'HR') {
+    //       const speaking_area = document.getElementById('speaking_area_lower')
+    //       const inserted_target = document.getElementById('last-element')
+    //       speaking_area.style.display = 'none'
+    //       inserted_target.parentNode.insertBefore(
+    //           speaking_area,
+    //           inserted_target
+    //       );
+    //     }
+    //     target.parentNode.parentNode.removeChild(target.parentNode)
+    //   })
+    //
+    //   // await this.storeDataLog({
+    //   //   type: 'remove_text',
+    //   //   content: this.currentTarget.innerText,
+    //   //   currentContent: temp_semanticList
+    //   // })
+    //
+    //   const insertedIndex = parseInt(this.selectedElements[this.selectedElements.length - 1].dataset.index) - this.selectedElements.length + 1
+    //   await this.$store.commit("update_current_index", insertedIndex);
+    //   const targetSibling = document.querySelector(
+    //       `[data-index="${parseInt(this.selectedElements[this.selectedElements.length - 1].dataset.index) + 1}"]`
+    //   );
+    //   this.$store.commit("update_current_target_block", targetSibling);
+    //   const cursorElement = document.getElementById("my_cursor");
+    //   targetSibling.parentNode.insertBefore(
+    //       cursorElement,
+    //       targetSibling
+    //   );
+    //   await this.$store.commit("set_semanticList", temp_semanticList);
+    //   this.$store.commit("clear_element");
+    // },
     async turnOnMic() {
       this.isStreaming = true;
       this.messages = [];
@@ -758,12 +799,14 @@ export default {
           // let selection = window.getSelection()
           // selection.deleteFromDocument()
           this.prevText = this.baseText.substring(selEnd)
+          this.selectionEnd = selStart
+          // console.log('sel: ', this.baseText.substring(0, selStart), '\n\n', this.prevText)
           this.baseText =
-              this.baseText.substring(0, selStart) + this.baseText.substring(selEnd)
+              this.baseText.substring(0, selStart) + this.prevText
         }
 
 
-        console.log('prev: ', this.prevText)
+        // console.log('prev: ', this.prevText)
         this.baseText =
             this.baseText.substring(0, this.selectionEnd) + ' ' + this.interimResult + ' '
             + this.prevText

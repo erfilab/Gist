@@ -48,21 +48,22 @@ export default {
   },
 
   computed: {
-    ...mapGetters(["current_target_block", "newSemanticContent", "semanticList", "previous_length"]),
+    ...mapGetters(["current_target_block", "newSemanticContent", "semanticList", "previous_length", "selectedElements"]),
   },
 
   watch: {
     async newSemanticContent() {
       if (this.newSemanticContent && this.newSemanticContent.length) {
         let currentIndex = parseInt(this.$store.state.current_block_index) + (
-        (this.current_target_block)?
-           0 : 2);
+        (!this.current_target_block && this.selectedElements.length > 0)?
+           1 : 0);
 
         // if (currentIndex < 0 &&
         //     this.$store.state.current_block_index < 0 &&
         //     !this.previous_length
         // ) currentIndex = 0
-        // console.log('ci', currentIndex, this.$store.state.current_block_index, this.previous_length)
+        // console.log('ci', this.selectedElements.length, this.current_target_block,
+        //     currentIndex, this.$store.state.current_block_index, this.previous_length)
 
         const insertedList = this.newSemanticContent
           .join(" ")
