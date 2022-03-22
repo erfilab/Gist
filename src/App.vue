@@ -47,6 +47,7 @@
       >
         <v-textarea
             @click="select"
+            @input="inputText"
             id="base-textarea"
             v-model="baseText"
             ref="input"
@@ -65,6 +66,8 @@
         <v-textarea
             id="post-anal-textarea"
             v-model="postAnalText"
+            @click="selectPostText"
+            @input="inputPostText"
         >
         </v-textarea>
       </v-main>
@@ -137,6 +140,7 @@ import {io} from "socket.io-client";
 import {mapGetters} from "vuex";
 import {db} from '@/plugins/firebase.js';
 import {ref, set, get, push} from 'firebase/database';
+import {diffChars, diffWords} from 'diff'
 
 const nowDay = new Date().toISOString().slice(0, 10);
 let socket = null;
@@ -165,6 +169,7 @@ export default {
     screenX: 9999,
     currentTarget: null,
     allCurrentTargets: [],
+    allCurrentTargetText: "",
 
     // trial information
     trialName: null,
@@ -185,6 +190,10 @@ export default {
     selectionEnd: 0,
     previousLength: 0,
     prevText: "",
+    previousBaseText: "",
+
+    //post analysis
+    previousPostText: ""
   }),
 
   components: {
@@ -211,8 +220,9 @@ export default {
       if (this.selectedNo >= 1) {
         if (this.selectedElements.length > 0) {
           this.changeLocationAndSpeak();
-
+          let selectedText = ""
           this.selectedElements.map(ele => {
+            selectedText += ele.innerText.trim() + " "
             ele.style.backgroundColor = '#c5e1a5'
             ele.style.padding = '8px'
             ele.style.margin = 0
@@ -278,11 +288,11 @@ export default {
           //     clone_modify_area.nextElementSibling
           // );
           //
-          // await this.storeDataLog({
-          //   type: 'multi_select',
-          //   content: clone_modify_area.innerHTML,
-          //   targetId: `to-modify-area-${this.selectedNo}`
-          // })
+          await this.storeDataLog({
+            type: 'multi_select',
+            content: selectedText,
+            targetId: `to-modify-area-${this.selectedNo}`
+          })
           //
           // // remove selected blocks
           // this.selectedElements.forEach((i) => {
@@ -321,9 +331,50 @@ export default {
     select(e) {
       this.selectionEnd = e.target.selectionEnd
       this.prevText = this.baseText.substring(this.selectionEnd + this.interimResult.length)
+
+      this.storeDataLog({
+        type: `user_selection`,
+        selectionEnd: this.selectionEnd,
+        prevTextFromSelectionEnd: this.prevText
+      })
+    },
+    inputText(e) {
+      // console.log('change', e, this)
+      const diffWord = diffChars(this.previousBaseText, e)
+      const id = this.uuidv4()
+      diffWord.forEach(part => {
+        // console.log('input diff: ', part.added ? 'added' : part.removed ? 'removed' : 'no change', part.value)
+        this.storeDataLog({
+          type: 'inputDiff',
+          index: id,
+          mode: part.added ? 'added' : part.removed ? 'removed' : 'no change',
+          text: part.value
+        })
+      })
+      this.previousBaseText = e
+    },
+    selectPostText(e) {
+      this.storeDataLog({
+        type: `user_selection`,
+        selectionEnd: e.target.selectionEnd,
+        selectionStart: e.target.selectionStart
+      })
+    },
+    inputPostText(e) {
+      const diffChar = diffChars(this.previousPostText, e)
+      const id = this.uuidv4()
+      diffChar.forEach(part => {
+        this.storeDataLog({
+          type: 'inputDiff',
+          index: id,
+          mode: part.added ? 'added' : part.removed ? 'removed' : 'no change',
+          text: part.value
+        })
+      })
+      this.previousPostText = e
     },
     async storeDataLog(payload) {
-      await push(ref(db, `${this.baseMode ? 'base-' : ''}trials/${this.trialName}/systemLogs`), {
+      await push(ref(db, `${this.baseMode ? 'base-' : (this.postAnalMode? 'post-' : '')}trials/${this.trialName}/systemLogs`), {
         timestamp: new Date().getTime(),
         ...payload,
       }).catch(console.error)
@@ -442,11 +493,14 @@ export default {
           if (canVibrate) window.navigator.vibrate(100)
         }, 480)
 
-        // await this.storeDataLog({
-        //   type: 'touch_block',
-        //   targetId: e.target.id,
-        //   content: this.currentTarget.innerText,
-        // })
+        this.allCurrentTargets.forEach(target => this.allCurrentTargetText += target.innerText.trim() + ' ')
+        await this.storeDataLog({
+          type: 'touch_green_block',
+          chunksLength: this.allCurrentTargets.length,
+          followingElementIndex: targetSibling.dataset.index,
+          followingElementText: targetSibling.innerText,
+          content: this.allCurrentTargetText,
+        })
       }
     },
     handleTouchMove(e) {
@@ -509,14 +563,17 @@ export default {
           }
           target.parentNode.parentNode.removeChild(target.parentNode)
         })
-
-        // await this.storeDataLog({
-        //   type: 'remove_text',
-        //   content: this.currentTarget.innerText,
-        //   currentContent: temp_semanticList
-        // })
-
         const insertedIndex = parseInt(this.allCurrentTargets[this.allCurrentTargets.length - 1].dataset.index) - this.allCurrentTargets.length + 1
+
+        await this.storeDataLog({
+          type: 'remove_text',
+          content: this.allCurrentTargetText,
+          chunksLength: this.allCurrentTargets.length,
+          nextInsertedIndex: insertedIndex,
+          followingElementText: targetSibling.innerText,
+          currentContent: temp_semanticList
+        })
+
         await this.$store.commit("update_current_index", insertedIndex);
         this.$store.commit("update_current_target_block", targetSibling);
         await this.$store.commit("set_semanticList", temp_semanticList);
@@ -578,15 +635,16 @@ export default {
         //   semantic_block.splice(parseInt(insertedIndex), 0, ...insertedList);
         // }
         //
-        // await this.storeDataLog({
-        //   type: 'remain_text',
-        //   content: this.currentTarget.innerText,
-        //   currentContent: semantic_block
-        // })
         // this.currentTarget.parentNode.removeChild(this.currentTarget);
 
         const insertedIndex = this.allCurrentTargets[this.allCurrentTargets.length - 1].dataset.index
         await this.$store.commit("update_current_index", parseInt(insertedIndex) + 1);
+        await this.storeDataLog({
+          type: 'remain_text',
+          content: this.allCurrentTargetText,
+          chunksLength: this.allCurrentTargets.length,
+          nextInsertedIndex: insertedIndex,
+        })
         // await this.$store.commit("set_semanticList", semantic_block);
         // console.log('insert: ', insertedIndex, this.semanticList)
         await this.$store.commit("clear_element");
@@ -764,6 +822,18 @@ export default {
 
       if (interim) {
         final.push(interim);
+      } else {
+        const finalResults = this.messages
+            .map((msg) =>
+                msg.results.map((result) => result.alternatives[0].transcript)
+            )
+            .reduce((a, b) => a.concat(b), [])
+
+        this.storeDataLog({
+          type: `final_transcript`,
+          content: finalResults,
+          mode: this.selectedElements.length > 0? 'respeak' : 'insert'
+        })
       }
       return final;
     },
@@ -806,8 +876,6 @@ export default {
 
         if (window.getSelection && selStart !== selEnd) {
           //user's selection
-          // let selection = window.getSelection()
-          // selection.deleteFromDocument()
           this.prevText = this.baseText.substring(selEnd)
           this.selectionEnd = selStart
           // console.log('sel: ', this.baseText.substring(0, selStart), '\n\n', this.prevText)
@@ -815,8 +883,6 @@ export default {
               this.baseText.substring(0, selStart) + this.prevText
         }
 
-
-        // console.log('prev: ', this.prevText)
         this.baseText =
             this.baseText.substring(0, this.selectionEnd) + ' ' + this.interimResult + ' '
             + this.prevText
@@ -827,9 +893,25 @@ export default {
             type: `final_transcript`,
             content: this.interimResult
           })
-          this.$nextTick(() => textarea.setSelectionRange(this.selectionEnd, this.selectionEnd))
+          const diffWord = diffWords(this.previousBaseText, this.baseText)
+          const id = this.uuidv4()
+          diffWord.forEach(part => {
+            // console.log('speech diff: ', part.added ? 'added' : part.removed ? 'removed' : 'no change', part.value)
+            this.storeDataLog({
+              type: 'speechInputDiff',
+              index: id,
+              mode: part.added ? 'added' : part.removed ? 'removed' : 'no change',
+              text: part.value
+            })
+          })
+          this.previousBaseText = this.baseText
         }
+        this.$nextTick(() => textarea.setSelectionRange(this.selectionEnd, this.selectionEnd))
         this.interimResult = ""
+
+        // diff
+        // console.log('diff chars: ', diffCh, '\n\ndiff Words: ', diffWord)
+
       } else {
         this.formattedMessages = this.formattedMessages.concat(data);
         this.messages = this.getFinalAndLatestInterimResult();
@@ -842,7 +924,7 @@ export default {
     });
 
     this.trialName = `trial-${this.uuidv4()}`
-    const trialRef = ref(db, `${this.baseMode ? 'base-' : ''}trials/` + this.trialName)
+    const trialRef = ref(db, `${this.baseMode ? 'base-' : (this.postAnalMode? 'post-' : '')}trials/` + this.trialName)
     socket.emit("joinRoom", this.trialName);
 
     await get(trialRef).then(async (snapshot) => {
@@ -860,7 +942,7 @@ export default {
     await this.$store.commit("update_current_index", 0);
 
     window.onerror = async function (msg, url, line, col, error) {
-      await push(ref(db, `${this.baseMode ? 'base-' : ''}trials/${this.trialName}/errorLogs`), {
+      await push(ref(db, `${this.baseMode ? 'base-' : (this.postAnalMode? 'post-' : '')}trials/${this.trialName}/errorLogs`), {
         timestamp: new Date().getTime(),
         errorMsg: msg,
         errorUrl: url,
@@ -882,10 +964,11 @@ export default {
 }
 
 #base-textarea {
-  height: 100vh;
+  height: 65vh;
+  //margin-bottom: 15rem;
 }
 
 #post-anal-textarea {
-  height: 100vh
+  height: 65vh
 }
 </style>

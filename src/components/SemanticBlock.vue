@@ -200,7 +200,7 @@ export default {
         this.$store.commit("add_element", this.currentTapTarget);
       }
     },
-    async handleTouchMove(e) {
+    handleTouchMove(e) {
       if (!this.startY) return;
 
       const yUp = e.touches[0].clientY;
@@ -214,10 +214,10 @@ export default {
               this.currentTapTarget.parentNode.previousElementSibling.firstChild;
           this.currentTapTarget.style.backgroundColor = "#E0E0E0";
           this.$store.commit("remove_element");
-          // await this.storeDataLog({
-          //   type: `backward_selection`,
-          //   content: this.currentTapTarget.innerText,
-          // })
+          this.storeDataLog({
+            type: `backward_selection`,
+            content: this.currentTapTarget.innerText,
+          })
         } else {
           if (this.currentTapTarget && this.currentTapTarget.tagName === "SPAN" && this.currentTapTarget.style.display !== "none") {
             if (
@@ -237,10 +237,10 @@ export default {
             this.currentTapTarget = this.currentTapTarget.nextElementSibling ?
                 this.currentTapTarget.nextElementSibling : this.currentTapTarget;
           }
-          // await this.storeDataLog({
-          //   type: `frontward_selection`,
-          //   content: this.currentTapTarget.innerText,
-          // })
+          this.storeDataLog({
+            type: `frontward_selection`,
+            content: this.currentTapTarget.innerText,
+          })
           // console.log("next", this.currentTapTarget.tagName, this.currentTapTarget.innerText);
         }
 
