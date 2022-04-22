@@ -163,6 +163,7 @@ export default {
 
     isFullScreen: false,
     isStreaming: false,
+    isTranscribing: false,
 
     startX: null,
     xDiff: 0,
@@ -182,7 +183,7 @@ export default {
     postAnalMode: false,
     postAnalText: "",
     // base mode
-    baseMode: false,
+    baseMode: true,
     // baseText: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. In diam arcu, aliquet a tellus feugiat, tincidunt maximus sapien. Integer urna eros, blandit non lacinia et, feugiat a elit. Mauris in sapien quis velit ultricies ultricies. Nulla varius mi in ligula fermentum, ac gravida dolor hendrerit. Phasellus fringilla at odio eget facilisis. ",
     baseText: "",
     interimResult: "",
@@ -329,9 +330,9 @@ export default {
 
   methods: {
     select(e) {
+      // this.isTranscribing
       this.selectionEnd = e.target.selectionEnd
       this.prevText = this.baseText.substring(this.selectionEnd + this.interimResult.length)
-
       this.storeDataLog({
         type: `user_selection`,
         selectionEnd: this.selectionEnd,
@@ -339,7 +340,12 @@ export default {
       })
     },
     inputText(e) {
-      // console.log('change', e, this)
+      if (!this.isTranscribing) {
+        // console.log('input', this.selectionEnd, this.previousBaseText.length - e.length)
+        this.selectionEnd += (e.length - this.previousBaseText.length)
+        // this.prevText = this.baseText.substring(this.selectionEnd)
+      }
+
       const diffWord = diffChars(this.previousBaseText, e)
       const id = this.uuidv4()
       diffWord.forEach(part => {
@@ -706,6 +712,7 @@ export default {
       this.formattedMessages = [];
       this.voice2text = null;
       this.$store.commit("clear_element");
+      if (this.baseMode) this.$refs.input.focus()
 
       await this.storeDataLog({
         type: 'microphone',
@@ -866,6 +873,7 @@ export default {
     );
 
     socket.on("TRANSCRIPT", async (data) => {
+      this.isTranscribing = true
       if (this.baseMode) {
         this.interimResult = data.results[0].alternatives[0].transcript;
         this.isTransFinal = data.results[0].isFinal;
@@ -887,7 +895,9 @@ export default {
             this.baseText.substring(0, this.selectionEnd) + ' ' + this.interimResult + ' '
             + this.prevText
 
+
         if (this.isTransFinal) {
+          this.isTranscribing = false
           this.selectionEnd += (this.interimResult.length + 1)
           await this.storeDataLog({
             type: `final_transcript`,
@@ -905,8 +915,13 @@ export default {
             })
           })
           this.previousBaseText = this.baseText
+          textarea.setSelectionRange(this.selectionEnd, this.selectionEnd)
         }
-        this.$nextTick(() => textarea.setSelectionRange(this.selectionEnd, this.selectionEnd))
+        else {
+          await textarea.setSelectionRange(this.selectionEnd + this.interimResult.length, this.selectionEnd + this.interimResult.length)
+        }
+        // console.log(this.selectionEnd, this.interimResult)
+        // this.$nextTick(() => textarea.setSelectionRange(this.selectionEnd, this.selectionEnd))
         this.interimResult = ""
 
         // diff
@@ -940,6 +955,7 @@ export default {
 
     await this.$store.commit("update_current_target_block", null);
     await this.$store.commit("update_current_index", 0);
+    if (this.baseMode) this.$refs.input.focus()
 
     window.onerror = async function (msg, url, line, col, error) {
       await push(ref(db, `${this.baseMode ? 'base-' : (this.postAnalMode? 'post-' : '')}trials/${this.trialName}/errorLogs`), {
