@@ -35,25 +35,28 @@
         </v-main>
       </v-touch>
 
-      <v-main
-          v-if="baseMode && !postAnalMode"
-          contenteditable="true"
-          style="
+      <div class="container"
+           v-if="baseMode && !postAnalMode"
+           contenteditable="true"
+           style="
             text-align: justify;
 
             margin: 25px 20px 20px 20px;
             text-justify: inter-word;
           "
       >
-        <v-textarea
+        <div class="backdrop">
+          <div class="highlights" v-html="clonedBaseText">
+          </div>
+        </div>
+        <textarea
             @click="select"
-            @input="inputText"
             id="base-textarea"
             v-model="baseText"
             ref="input"
         >
-        </v-textarea>
-      </v-main>
+        </textarea>
+      </div>
       <v-main
           v-if="postAnalMode && !baseMode"
           contenteditable="true"
@@ -72,15 +75,15 @@
         </v-textarea>
       </v-main>
 
-      <v-btn fab dark
-             absolute bottom left
-             style="position: fixed; bottom: 15px; left: 25px"
-             @click.end="toggleFullScreen"
-      >
-        <v-icon
-        >{{ isFullScreen ? "mdi-fullscreen-exit" : "mdi-fullscreen" }}
-        </v-icon>
-      </v-btn>
+<!--      <v-btn fab dark-->
+<!--             absolute bottom left-->
+<!--             style="position: fixed; bottom: 15px; left: 25px"-->
+<!--             @click.end="toggleFullScreen"-->
+<!--      >-->
+<!--        <v-icon-->
+<!--        >{{ isFullScreen ? "mdi-fullscreen-exit" : "mdi-fullscreen" }}-->
+<!--        </v-icon>-->
+<!--      </v-btn>-->
 
       <v-btn fab dark
              absolute bottom left
@@ -90,17 +93,18 @@
         <v-icon>mdi-download</v-icon>
       </v-btn>
 
-      <!--      <v-btn-->
-      <!--          fab-->
-      <!--          dark-->
-      <!--          absolute-->
-      <!--          bottom-->
-      <!--          left-->
-      <!--          style="position: fixed; bottom: 15px; left: 142px"-->
-      <!--          @click="deleteText"-->
-      <!--      >-->
-      <!--        <v-icon>mdi-close</v-icon>-->
-      <!--      </v-btn>-->
+      <v-btn
+          fab
+          color="warning"
+          absolute
+          bottom
+          left
+          style="position: fixed; bottom: 15px; left: 25px"
+
+          @click="deleteText"
+      >
+        <v-icon>mdi-close</v-icon>
+      </v-btn>
 
       <v-btn fab dark
              absolute bottom right
@@ -182,10 +186,14 @@ export default {
     // post analysis mode
     postAnalMode: false,
     postAnalText: "",
+
     // base mode
     baseMode: true,
-    // baseText: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. In diam arcu, aliquet a tellus feugiat, tincidunt maximus sapien. Integer urna eros, blandit non lacinia et, feugiat a elit. Mauris in sapien quis velit ultricies ultricies. Nulla varius mi in ligula fermentum, ac gravida dolor hendrerit. Phasellus fringilla at odio eget facilisis. ",
+    currentHighlightedText: "",
     baseText: "",
+    clonedBaseText: "",
+    // baseText: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. In diam arcu, aliquet a tellus feugiat, tincidunt maximus sapien. Integer urna eros, blandit non lacinia et, feugiat a elit. Mauris in sapien quis velit ultricies ultricies. Nulla varius mi in ligula fermentum, ac gravida dolor hendrerit. Phasellus fringilla at odio eget love facilisis. ",
+    // clonedBaseText: "<mark>Lorem</mark> ipsum dolor sit amet, <mark>consectetur adipiscing elit.</mark> In diam arcu, aliquet a tellus feugiat, <mark>tincidunt</mark> maximus sapien. Integer urna <mark>eros,</mark> blandit non <mark>lacinia et</mark>, feugiat a elit. Mauris in <mark>sapien quis velit ultricies ultricies.</mark> Nulla varius mi in ligula fermentum, ac gravida dolor hendrerit. <mark>Phasellus fringilla at odio</mark> edgit love <mark>facilisis</mark>. ",
     interimResult: "",
     isTransFinal: false,
     selectionEnd: 0,
@@ -339,26 +347,30 @@ export default {
         prevTextFromSelectionEnd: this.prevText
       })
     },
-    inputText(e) {
-      if (!this.isTranscribing) {
-        // console.log('input', this.selectionEnd, this.previousBaseText.length - e.length)
-        this.selectionEnd += (e.length - this.previousBaseText.length)
-        // this.prevText = this.baseText.substring(this.selectionEnd)
-      }
-
-      const diffWord = diffChars(this.previousBaseText, e)
-      const id = this.uuidv4()
-      diffWord.forEach(part => {
-        // console.log('input diff: ', part.added ? 'added' : part.removed ? 'removed' : 'no change', part.value)
-        this.storeDataLog({
-          type: 'inputDiff',
-          index: id,
-          mode: part.added ? 'added' : part.removed ? 'removed' : 'no change',
-          text: part.value
-        })
-      })
-      this.previousBaseText = e
+    deleteText() {
+      this.clonedBaseText = this.baseText.replace(this.currentHighlightedText, '')
+      this.baseText = this.clonedBaseText
     },
+    // inputText(e) {
+    //   if (!this.isTranscribing) {
+    //     // console.log('input', this.selectionEnd, this.previousBaseText.length - e.length)
+    //     this.selectionEnd += (e.length - this.previousBaseText.length)
+    //     // this.prevText = this.baseText.substring(this.selectionEnd)
+    //   }
+    //
+    //   const diffWord = diffChars(this.previousBaseText, e)
+    //   const id = this.uuidv4()
+    //   diffWord.forEach(part => {
+    //     // console.log('input diff: ', part.added ? 'added' : part.removed ? 'removed' : 'no change', part.value)
+    //     this.storeDataLog({
+    //       type: 'inputDiff',
+    //       index: id,
+    //       mode: part.added ? 'added' : part.removed ? 'removed' : 'no change',
+    //       text: part.value
+    //     })
+    //   })
+    //   this.previousBaseText = e
+    // },
     selectPostText(e) {
       this.storeDataLog({
         type: `user_selection`,
@@ -380,7 +392,7 @@ export default {
       this.previousPostText = e
     },
     async storeDataLog(payload) {
-      await push(ref(db, `${this.baseMode ? 'base-' : (this.postAnalMode? 'post-' : '')}trials/${this.trialName}/systemLogs`), {
+      await push(ref(db, `${this.baseMode ? 'base-' : (this.postAnalMode ? 'post-' : '')}trials/${this.trialName}/systemLogs`), {
         timestamp: new Date().getTime(),
         ...payload,
       }).catch(console.error)
@@ -839,7 +851,7 @@ export default {
         this.storeDataLog({
           type: `final_transcript`,
           content: finalResults,
-          mode: this.selectedElements.length > 0? 'respeak' : 'insert'
+          mode: this.selectedElements.length > 0 ? 'respeak' : 'insert'
         })
       }
       return final;
@@ -878,23 +890,26 @@ export default {
         this.interimResult = data.results[0].alternatives[0].transcript;
         this.isTransFinal = data.results[0].isFinal;
 
-        const textarea = this.$refs['input'].$el.querySelector('input:not([type=hidden]),textarea:not([type=hidden])')
+        // const textarea = this.$refs['input'].$el.querySelector('input:not([type=hidden]),textarea:not([type=hidden])')
+        const textarea = document.getElementById('base-textarea')
         const selStart = textarea.selectionStart
         const selEnd = textarea.selectionEnd
 
         if (window.getSelection && selStart !== selEnd) {
           //user's selection
           this.prevText = this.baseText.substring(selEnd)
-          this.selectionEnd = selStart
-          // console.log('sel: ', this.baseText.substring(0, selStart), '\n\n', this.prevText)
-          this.baseText =
-              this.baseText.substring(0, selStart) + this.prevText
+          this.selectionEnd = selEnd
+          this.currentHighlightedText = this.baseText.substring(selStart, selEnd)
+          // console.log('sel: ', this.currentHighlightedText, '\n\n', this.prevText)
+          // this.baseText =
+          //     this.baseText.substring(0, selEnd) + this.prevText
         }
 
         this.baseText =
             this.baseText.substring(0, this.selectionEnd) + ' ' + this.interimResult + ' '
             + this.prevText
 
+        this.clonedBaseText = this.baseText.replace(this.currentHighlightedText, `<mark>${this.currentHighlightedText}</mark>`)
 
         if (this.isTransFinal) {
           this.isTranscribing = false
@@ -917,16 +932,9 @@ export default {
           this.previousBaseText = this.baseText
           textarea.setSelectionRange(this.selectionEnd, this.selectionEnd)
         }
-        else {
-          await textarea.setSelectionRange(this.selectionEnd + this.interimResult.length, this.selectionEnd + this.interimResult.length)
-        }
-        // console.log(this.selectionEnd, this.interimResult)
-        // this.$nextTick(() => textarea.setSelectionRange(this.selectionEnd, this.selectionEnd))
+        else textarea.setSelectionRange(this.selectionEnd + this.interimResult.length, this.selectionEnd + this.interimResult.length)
+        // this.$nextTick(() => textarea.setSelectionRange(this.selectionEnd + this.interimResult.length, this.selectionEnd + this.interimResult.length))
         this.interimResult = ""
-
-        // diff
-        // console.log('diff chars: ', diffCh, '\n\ndiff Words: ', diffWord)
-
       } else {
         this.formattedMessages = this.formattedMessages.concat(data);
         this.messages = this.getFinalAndLatestInterimResult();
@@ -939,7 +947,7 @@ export default {
     });
 
     this.trialName = `trial-${this.uuidv4()}`
-    const trialRef = ref(db, `${this.baseMode ? 'base-' : (this.postAnalMode? 'post-' : '')}trials/` + this.trialName)
+    const trialRef = ref(db, `${this.baseMode ? 'base-' : (this.postAnalMode ? 'post-' : '')}trials/` + this.trialName)
     socket.emit("joinRoom", this.trialName);
 
     await get(trialRef).then(async (snapshot) => {
@@ -958,7 +966,7 @@ export default {
     if (this.baseMode) this.$refs.input.focus()
 
     window.onerror = async function (msg, url, line, col, error) {
-      await push(ref(db, `${this.baseMode ? 'base-' : (this.postAnalMode? 'post-' : '')}trials/${this.trialName}/errorLogs`), {
+      await push(ref(db, `${this.baseMode ? 'base-' : (this.postAnalMode ? 'post-' : '')}trials/${this.trialName}/errorLogs`), {
         timestamp: new Date().getTime(),
         errorMsg: msg,
         errorUrl: url,
@@ -982,9 +990,58 @@ export default {
 #base-textarea {
   height: 65vh;
   //margin-bottom: 15rem;
+  background-color: transparent;
+  display: block;
+  position: absolute;
+  z-index: 2;
+  margin: 0;
+  border-radius: 0;
+  color: #444;
+  overflow: auto;
+  resize: none;
+  transition: transform 1s;
 }
 
 #post-anal-textarea {
   height: 65vh
+}
+
+.backdrop {
+  position: absolute;
+  line-height: 1.8;
+  background-color: #fff;
+  overflow: auto;
+  pointer-events: none;
+  transition: transform 1s;
+}
+
+.highlights {
+
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: transparent;
+}
+
+.container, .backdrop, #base-textarea {
+  width: 360px;
+}
+
+.highlights, #base-textarea {
+  padding: 10px;
+  font: 16px 'Open Sans', sans-serif;
+  letter-spacing: 0;
+  text-align: justify;
+}
+
+.container {
+  display: block;
+  margin: 0 auto;
+}
+
+mark {
+  border-radius: 3px;
+  color: transparent;
+  background-color: #d4e9ab;
+  //transition: visibility 0s 2s, opacity 2s linear;
 }
 </style>
