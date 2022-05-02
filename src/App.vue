@@ -7,8 +7,8 @@
           style="margin: 0 auto;"
       >
         <v-btn @click="() => {this.baseMode = false; this.postAnalMode = false}">
-          Gist
-          <v-icon right>mdi-alpha-g-box</v-icon>
+          Iterative
+          <v-icon right>mdi-alpha-i-box</v-icon>
         </v-btn>
         <v-btn @click="() => {this.baseMode = true; this.postAnalMode = false}">
           Baseline
@@ -19,41 +19,64 @@
           <v-icon right>mdi-alpha-a-box</v-icon>
         </v-btn>
       </v-btn-toggle>
-      <v-touch v-if="!baseMode && !postAnalMode">
-        <v-main
-            style="
-            margin: 25px 20px 20px 20px;
-            position: relative;
-            text-align: justify;
-            text-justify: inter-word;
-          "
-            id="main"
-        >
-          <SemanticText :semantic_text="this.text" :trialName="this.trialName"></SemanticText>
-          <MyCursor id="my_cursor"/>
-          <div id="last-element"/>
-        </v-main>
-      </v-touch>
 
+      <!--   ==== gist based iterative drafting ===== -->
+      <!--      <v-touch v-if="!baseMode && !postAnalMode">-->
+      <!--        <v-main-->
+      <!--            style="-->
+      <!--            margin: 25px 20px 20px 20px;-->
+      <!--            position: relative;-->
+      <!--            text-align: justify;-->
+      <!--            text-justify: inter-word;-->
+      <!--          "-->
+      <!--            id="main"-->
+      <!--        >-->
+      <!--          <SemanticText :semantic_text="this.text" :trialName="this.trialName"></SemanticText>-->
+      <!--          <MyCursor id="my_cursor"/>-->
+      <!--          <div id="last-element"/>-->
+      <!--        </v-main>-->
+      <!--      </v-touch>-->
+
+      <!--      ===== iterative drafting ===== -->
       <div class="container"
-           v-if="baseMode && !postAnalMode"
+           v-if="!baseMode && !postAnalMode"
            contenteditable="true"
            style="
             text-align: justify;
-
             margin: 25px 20px 20px 20px;
             text-justify: inter-word;
           "
       >
         <div class="backdrop">
-          <div class="highlights" v-html="clonedBaseText">
+          <div class="highlights" v-html="clonedIdText">
           </div>
         </div>
         <textarea
             @click="select"
+            id="id-textarea"
+            v-model="idText"
+            ref="idInput"
+            inputmode='none'
+            @contextmenu="contextmenu"
+        >
+        </textarea>
+      </div>
+
+      <!--   ===== baseline ===== -->
+      <div class="container"
+           v-if="baseMode && !postAnalMode"
+           contenteditable="true"
+           style="
+            text-align: justify;
+            margin: 25px 20px 20px 20px;
+            text-justify: inter-word;
+          "
+      >
+        <textarea
+            @click="select"
             id="base-textarea"
             v-model="baseText"
-            ref="input"
+            ref="baseInput"
             inputmode='none'
             @contextmenu="contextmenu"
         >
@@ -69,6 +92,7 @@
           "
       >
         <v-textarea
+            ref="postInput"
             id="post-anal-textarea"
             v-model="postAnalText"
             @click="selectPostText"
@@ -95,6 +119,7 @@
       <!--        <v-icon>mdi-download</v-icon>-->
       <!--      </v-btn>-->
       <v-btn
+          v-if="!baseMode && !postAnalMode"
           fab
           color="warning"
           absolute
@@ -108,6 +133,7 @@
       </v-btn>
 
       <v-btn fab dark
+             v-if="!baseMode && !postAnalMode"
              absolute bottom left
              style="position: fixed; bottom: 15px; left: 83px"
              @click="deleteCurrentSelection"
@@ -145,9 +171,9 @@
 </template>
 
 <script>
-import SemanticText from "@/components/SemanticText";
+// import SemanticText from "@/components/SemanticText";
 // import SwipeText from "@/components/SwipeText";
-import MyCursor from "@/components/MyCursor";
+// import MyCursor from "@/components/MyCursor";
 
 import {io} from "socket.io-client";
 import {mapGetters} from "vuex";
@@ -196,29 +222,31 @@ export default {
     postAnalMode: false,
     postAnalText: "",
 
-    // base mode
-    baseMode: true,
+    // iterative drafting
+    idText: "",
+    clonedIdText: "",
+    previousIdText: "",
     currentHighlightedText: "",
-    baseText: "",
-    clonedBaseText: "",
-    // baseText: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. In diam arcu, aliquet a tellus feugiat, tincidunt maximus sapien. Integer urna eros, blandit non lacinia et, feugiat a elit. Mauris in sapien quis velit ultricies ultricies. Nulla varius mi in ligula fermentum, ac gravida dolor hendrerit. Phasellus fringilla at odio eget love facilisis. ",
-    // clonedBaseText: "<mark>Lorem</mark> ipsum dolor sit amet, <mark>consectetur adipiscing elit.</mark> In diam arcu, aliquet a tellus feugiat, <mark>tincidunt</mark> maximus sapien. Integer urna <mark>eros,</mark> blandit non <mark>lacinia et</mark>, feugiat a elit. Mauris in <mark>sapien quis velit ultricies ultricies.</mark> Nulla varius mi in ligula fermentum, ac gravida dolor hendrerit. <mark>Phasellus fringilla at odio</mark> edgit love <mark>facilisis</mark>. ",
     prevSel: [],
+
+    // base mode
+    baseMode: false,
+    baseText: "",
+    previousBaseText: "",
 
     interimResult: "",
     isTransFinal: false,
     selectionEnd: 0,
     previousLength: 0,
     prevText: "",
-    previousBaseText: "",
 
     //post analysis
     previousPostText: ""
   }),
 
   components: {
-    MyCursor,
-    SemanticText,
+    // MyCursor,
+    // SemanticText,
     // SwipeText,
   },
 
@@ -235,7 +263,6 @@ export default {
   },
 
   watch: {
-    // async
     async selectedNo() {
       if (this.selectedNo >= 1) {
         if (this.selectedElements.length > 0) {
@@ -335,11 +362,9 @@ export default {
         this.changeLocationAndSpeak();
       }
     },
-
     voice2text_val() {
       if (!this.baseMode) this.$store.commit("set_new_semantic_content", this.voice2text);
     },
-
     interimResult() {
       // const inputElement = this.$refs.baseText.querySelector('input')
       // const inputElement = document.getElementById('base-textarea')
@@ -349,9 +374,8 @@ export default {
 
   methods: {
     select(e) {
-      // this.isTranscribing
       this.selectionEnd = e.target.selectionEnd
-      this.prevText = this.baseText.substring(this.selectionEnd + this.interimResult.length)
+      this.prevText = this[`${this.baseMode ? 'base' : 'id'}Text`].substring(this.selectionEnd + this.interimResult.length)
       this.storeDataLog({
         type: `user_selection`,
         selectionEnd: this.selectionEnd,
@@ -359,18 +383,20 @@ export default {
       })
     },
     deleteText() {
-      this.clonedBaseText = this.baseText.replace(this.currentHighlightedText, '')
-      this.baseText = this.clonedBaseText
+      this.clonedIdText = this.idText.replace(this.currentHighlightedText, '')
+      this.idText = this.clonedIdText
     },
-    contextmenu(e) {e.preventDefault()},
+    contextmenu(e) {
+      e.preventDefault()
+    },
     deleteCurrentSelection() {
-      const textarea = document.getElementById('base-textarea')
-      this.baseText = this.baseText.slice(0, textarea.selectionStart) + this.baseText.slice(textarea.selectionEnd)
-      this.clonedBaseText = this.baseText
-      this.clonedBaseText = this.baseText.replace(this.currentHighlightedText, `<mark>${this.currentHighlightedText}</mark>`)
+      const textarea = document.getElementById('id-textarea')
+      this.idText = this.idText.slice(0, textarea.selectionStart) + this.idText.slice(textarea.selectionEnd)
+      this.clonedIdText = this.idText
+      this.clonedIdText = this.idText.replace(this.currentHighlightedText, `<mark>${this.currentHighlightedText}</mark>`)
 
       this.selectionEnd = textarea.selectionStart
-      this.prevText = this.baseText.substring(this.selectionEnd + this.interimResult.length)
+      this.prevText = this.idText.substring(this.selectionEnd + this.interimResult.length)
       textarea.focus()
       this.$nextTick(() => textarea.setSelectionRange(this.selectionEnd, this.selectionEnd))
     },
@@ -415,7 +441,7 @@ export default {
       this.previousPostText = e
     },
     async storeDataLog(payload) {
-      await push(ref(db, `${this.baseMode ? 'base-' : (this.postAnalMode ? 'post-' : '')}trials/${this.trialName}/systemLogs`), {
+      await push(ref(db, `${this.baseMode ? 'base-' : (this.postAnalMode ? 'post-' : 'id-')}trials/${this.trialName}/systemLogs`), {
         timestamp: new Date().getTime(),
         ...payload,
       }).catch(console.error)
@@ -747,7 +773,9 @@ export default {
       this.formattedMessages = [];
       this.voice2text = null;
       this.$store.commit("clear_element");
-      if (this.baseMode) this.$refs.input.focus()
+      if (!this.baseMode && !this.postAnalMode) this.$refs.idInput.focus()
+      else if (this.baseMode) this.$refs.baseInput.focus()
+      else this.$refs.postInput.focus()
 
       await this.storeDataLog({
         type: 'microphone',
@@ -909,39 +937,82 @@ export default {
 
     socket.on("TRANSCRIPT", async (data) => {
       this.isTranscribing = true
-      if (this.baseMode) {
+      if (!this.baseMode && !this.postAnalMode) {
         this.interimResult = data.results[0].alternatives[0].transcript;
         this.isTransFinal = data.results[0].isFinal;
 
         // const textarea = this.$refs['input'].$el.querySelector('input:not([type=hidden]),textarea:not([type=hidden])')
-        const textarea = document.getElementById('base-textarea')
+        const textarea = document.getElementById('id-textarea')
         const selStart = textarea.selectionStart
         const selEnd = textarea.selectionEnd
 
         if (window.getSelection && selStart !== selEnd) {
-          const highlightText = this.baseText.substring(selStart, selEnd)
+          const highlightText = this.idText.substring(selStart, selEnd)
           //user's selection
-          if (this.currentHighlightedText.length && highlightText.trim() !== this.currentHighlightedText.trim()) {
+          if (this.currentHighlightedText.length && highlightText.trim() !== this.currentHighlightedText.trim())
             this.deleteText()
-          }
+
           if (this.prevSel && this.prevSel[0] < selStart) {
             // const [prevSelStart, prevSelEnd] = this.prevSel
             console.log(this.currentHighlightedText, highlightText, selEnd)
-            this.prevText = this.baseText.substring(selEnd - this.currentHighlightedText.length)
+            this.prevText = this.idText.substring(selEnd - this.currentHighlightedText.length)
             this.selectionEnd = selEnd - this.currentHighlightedText.length
           } else {
-            this.prevText = this.baseText.substring(selEnd)
+            this.prevText = this.idText.substring(selEnd)
             this.selectionEnd = selEnd
           }
           this.prevSel = [selStart, selEnd]
           this.currentHighlightedText = highlightText
         }
 
+        this.idText =
+            this.idText.substring(0, this.selectionEnd) + ' ' + this.interimResult + ' '
+            + this.prevText
+
+        this.clonedIdText = this.idText.replace(this.currentHighlightedText, `<mark>${this.currentHighlightedText}</mark>`)
+
+        if (this.isTransFinal) {
+          this.isTranscribing = false
+          this.selectionEnd += (this.interimResult.length + 1)
+          await this.storeDataLog({
+            type: `final_transcript`,
+            content: this.interimResult
+          })
+          const diffWord = diffWords(this.previousIdText, this.idText)
+          const id = this.uuidv4()
+          diffWord.forEach(part => {
+            // console.log('speech diff: ', part.added ? 'added' : part.removed ? 'removed' : 'no change', part.value)
+            this.storeDataLog({
+              type: 'speechInputDiff',
+              index: id,
+              mode: part.added ? 'added' : part.removed ? 'removed' : 'no change',
+              text: part.value
+            })
+          })
+          this.previousIdText = this.idText
+          textarea.setSelectionRange(this.selectionEnd + 1, this.selectionEnd + 1)
+        } else {
+          this.$nextTick(() => textarea.setSelectionRange(this.selectionEnd + this.interimResult.length, this.selectionEnd + this.interimResult.length))
+          // textarea.setSelectionRange(this.selectionEnd + this.interimResult.length, this.selectionEnd + this.interimResult.length)
+        }
+        this.interimResult = ""
+      } else if (this.baseMode) {
+        this.interimResult = data.results[0].alternatives[0].transcript;
+        this.isTransFinal = data.results[0].isFinal;
+        const textarea = document.getElementById('base-textarea')
+        const selStart = textarea.selectionStart
+        const selEnd = textarea.selectionEnd
+
+        if (window.getSelection && selStart !== selEnd) {
+          this.prevText = this.baseText.substring(selEnd)
+          this.selectionEnd = selStart
+          this.baseText =
+              this.baseText.substring(0, selStart) + this.prevText
+        }
+
         this.baseText =
             this.baseText.substring(0, this.selectionEnd) + ' ' + this.interimResult + ' '
             + this.prevText
-
-        this.clonedBaseText = this.baseText.replace(this.currentHighlightedText, `<mark>${this.currentHighlightedText}</mark>`)
 
         if (this.isTransFinal) {
           this.isTranscribing = false
@@ -953,7 +1024,6 @@ export default {
           const diffWord = diffWords(this.previousBaseText, this.baseText)
           const id = this.uuidv4()
           diffWord.forEach(part => {
-            // console.log('speech diff: ', part.added ? 'added' : part.removed ? 'removed' : 'no change', part.value)
             this.storeDataLog({
               type: 'speechInputDiff',
               index: id,
@@ -963,10 +1033,7 @@ export default {
           })
           this.previousBaseText = this.baseText
           textarea.setSelectionRange(this.selectionEnd + 1, this.selectionEnd + 1)
-        } else {
-          this.$nextTick(() => textarea.setSelectionRange(this.selectionEnd + this.interimResult.length, this.selectionEnd + this.interimResult.length))
-          // textarea.setSelectionRange(this.selectionEnd + this.interimResult.length, this.selectionEnd + this.interimResult.length)
-        }
+        } else this.$nextTick(() => textarea.setSelectionRange(this.selectionEnd + this.interimResult.length, this.selectionEnd + this.interimResult.length))
         this.interimResult = ""
       } else {
         this.formattedMessages = this.formattedMessages.concat(data);
@@ -980,7 +1047,7 @@ export default {
     });
 
     this.trialName = `trial-${this.uuidv4()}`
-    const trialRef = ref(db, `${this.baseMode ? 'base-' : (this.postAnalMode ? 'post-' : '')}trials/` + this.trialName)
+    const trialRef = ref(db, `${this.baseMode ? 'base-' : (this.postAnalMode ? 'post-' : 'id-')}trials/` + this.trialName)
     socket.emit("joinRoom", this.trialName);
 
     await get(trialRef).then(async (snapshot) => {
@@ -996,10 +1063,12 @@ export default {
 
     await this.$store.commit("update_current_target_block", null);
     await this.$store.commit("update_current_index", 0);
-    if (this.baseMode) this.$refs.input.focus()
+    if (!this.baseMode && !this.postAnalMode) this.$refs.idInput.focus()
+    else if (this.baseMode) this.$refs.baseInput.focus()
+    else this.$refs.postInput.focus()
 
     window.onerror = async function (msg, url, line, col, error) {
-      await push(ref(db, `${this.baseMode ? 'base-' : (this.postAnalMode ? 'post-' : '')}trials/${this.trialName}/errorLogs`), {
+      await push(ref(db, `${this.baseMode ? 'base-' : (this.postAnalMode ? 'post-' : 'id-')}trials/${this.trialName}/errorLogs`), {
         timestamp: new Date().getTime(),
         errorMsg: msg,
         errorUrl: url,
@@ -1020,7 +1089,7 @@ export default {
   overflow-y: auto;
 }
 
-#base-textarea {
+#base-textarea, #id-textarea {
   height: 65vh;
   //margin-bottom: 15rem;
   background-color: transparent;
@@ -1055,11 +1124,11 @@ export default {
   color: transparent;
 }
 
-.container, .backdrop, #base-textarea {
+.container, .backdrop, #base-textarea, #id-textarea {
   width: 360px;
 }
 
-.highlights, #base-textarea {
+.highlights, #base-textarea, #id-textarea {
   padding: 10px;
   font: 16px 'Open Sans', sans-serif;
   letter-spacing: 0;
