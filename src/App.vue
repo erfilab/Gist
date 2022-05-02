@@ -54,6 +54,8 @@
             id="base-textarea"
             v-model="baseText"
             ref="input"
+            inputmode='none'
+            @contextmenu="contextmenu"
         >
         </textarea>
       </div>
@@ -75,24 +77,23 @@
         </v-textarea>
       </v-main>
 
-<!--      <v-btn fab dark-->
-<!--             absolute bottom left-->
-<!--             style="position: fixed; bottom: 15px; left: 25px"-->
-<!--             @click.end="toggleFullScreen"-->
-<!--      >-->
-<!--        <v-icon-->
-<!--        >{{ isFullScreen ? "mdi-fullscreen-exit" : "mdi-fullscreen" }}-->
-<!--        </v-icon>-->
-<!--      </v-btn>-->
+      <!--      <v-btn fab dark-->
+      <!--             absolute bottom left-->
+      <!--             style="position: fixed; bottom: 15px; left: 25px"-->
+      <!--             @click.end="toggleFullScreen"-->
+      <!--      >-->
+      <!--        <v-icon-->
+      <!--        >{{ isFullScreen ? "mdi-fullscreen-exit" : "mdi-fullscreen" }}-->
+      <!--        </v-icon>-->
+      <!--      </v-btn>-->
 
-      <v-btn fab dark
-             absolute bottom left
-             style="position: fixed; bottom: 15px; left: 83px"
-             @click="exportText"
-      >
-        <v-icon>mdi-download</v-icon>
-      </v-btn>
-
+      <!--      <v-btn fab dark-->
+      <!--             absolute bottom left-->
+      <!--             style="position: fixed; bottom: 15px; left: 83px"-->
+      <!--             @click="exportText"-->
+      <!--      >-->
+      <!--        <v-icon>mdi-download</v-icon>-->
+      <!--      </v-btn>-->
       <v-btn
           fab
           color="warning"
@@ -104,6 +105,14 @@
           @click="deleteText"
       >
         <v-icon>mdi-close</v-icon>
+      </v-btn>
+
+      <v-btn fab dark
+             absolute bottom left
+             style="position: fixed; bottom: 15px; left: 83px"
+             @click="deleteCurrentSelection"
+      >
+        <v-icon>mdi-backspace</v-icon>
       </v-btn>
 
       <v-btn fab dark
@@ -194,6 +203,8 @@ export default {
     clonedBaseText: "",
     // baseText: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. In diam arcu, aliquet a tellus feugiat, tincidunt maximus sapien. Integer urna eros, blandit non lacinia et, feugiat a elit. Mauris in sapien quis velit ultricies ultricies. Nulla varius mi in ligula fermentum, ac gravida dolor hendrerit. Phasellus fringilla at odio eget love facilisis. ",
     // clonedBaseText: "<mark>Lorem</mark> ipsum dolor sit amet, <mark>consectetur adipiscing elit.</mark> In diam arcu, aliquet a tellus feugiat, <mark>tincidunt</mark> maximus sapien. Integer urna <mark>eros,</mark> blandit non <mark>lacinia et</mark>, feugiat a elit. Mauris in <mark>sapien quis velit ultricies ultricies.</mark> Nulla varius mi in ligula fermentum, ac gravida dolor hendrerit. <mark>Phasellus fringilla at odio</mark> edgit love <mark>facilisis</mark>. ",
+    prevSel: [],
+
     interimResult: "",
     isTransFinal: false,
     selectionEnd: 0,
@@ -350,6 +361,18 @@ export default {
     deleteText() {
       this.clonedBaseText = this.baseText.replace(this.currentHighlightedText, '')
       this.baseText = this.clonedBaseText
+    },
+    contextmenu(e) {e.preventDefault()},
+    deleteCurrentSelection() {
+      const textarea = document.getElementById('base-textarea')
+      this.baseText = this.baseText.slice(0, textarea.selectionStart) + this.baseText.slice(textarea.selectionEnd)
+      this.clonedBaseText = this.baseText
+      this.clonedBaseText = this.baseText.replace(this.currentHighlightedText, `<mark>${this.currentHighlightedText}</mark>`)
+
+      this.selectionEnd = textarea.selectionStart
+      this.prevText = this.baseText.substring(this.selectionEnd + this.interimResult.length)
+      textarea.focus()
+      this.$nextTick(() => textarea.setSelectionRange(this.selectionEnd, this.selectionEnd))
     },
     // inputText(e) {
     //   if (!this.isTranscribing) {
@@ -896,13 +919,22 @@ export default {
         const selEnd = textarea.selectionEnd
 
         if (window.getSelection && selStart !== selEnd) {
+          const highlightText = this.baseText.substring(selStart, selEnd)
           //user's selection
-          this.prevText = this.baseText.substring(selEnd)
-          this.selectionEnd = selEnd
-          this.currentHighlightedText = this.baseText.substring(selStart, selEnd)
-          // console.log('sel: ', this.currentHighlightedText, '\n\n', this.prevText)
-          // this.baseText =
-          //     this.baseText.substring(0, selEnd) + this.prevText
+          if (this.currentHighlightedText.length && highlightText.trim() !== this.currentHighlightedText.trim()) {
+            this.deleteText()
+          }
+          if (this.prevSel && this.prevSel[0] < selStart) {
+            // const [prevSelStart, prevSelEnd] = this.prevSel
+            console.log(this.currentHighlightedText, highlightText, selEnd)
+            this.prevText = this.baseText.substring(selEnd - this.currentHighlightedText.length)
+            this.selectionEnd = selEnd - this.currentHighlightedText.length
+          } else {
+            this.prevText = this.baseText.substring(selEnd)
+            this.selectionEnd = selEnd
+          }
+          this.prevSel = [selStart, selEnd]
+          this.currentHighlightedText = highlightText
         }
 
         this.baseText =
@@ -930,10 +962,11 @@ export default {
             })
           })
           this.previousBaseText = this.baseText
-          textarea.setSelectionRange(this.selectionEnd, this.selectionEnd)
+          textarea.setSelectionRange(this.selectionEnd + 1, this.selectionEnd + 1)
+        } else {
+          this.$nextTick(() => textarea.setSelectionRange(this.selectionEnd + this.interimResult.length, this.selectionEnd + this.interimResult.length))
+          // textarea.setSelectionRange(this.selectionEnd + this.interimResult.length, this.selectionEnd + this.interimResult.length)
         }
-        else textarea.setSelectionRange(this.selectionEnd + this.interimResult.length, this.selectionEnd + this.interimResult.length)
-        // this.$nextTick(() => textarea.setSelectionRange(this.selectionEnd + this.interimResult.length, this.selectionEnd + this.interimResult.length))
         this.interimResult = ""
       } else {
         this.formattedMessages = this.formattedMessages.concat(data);
