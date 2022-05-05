@@ -14,10 +14,10 @@
           Baseline
           <v-icon right>mdi-alpha-b-box</v-icon>
         </v-btn>
-        <v-btn @click="() => {this.baseMode = false; this.postAnalMode = true}">
-          Analysis
-          <v-icon right>mdi-alpha-a-box</v-icon>
-        </v-btn>
+<!--        <v-btn @click="() => {this.baseMode = false; this.postAnalMode = true}">-->
+<!--          Analysis-->
+<!--          <v-icon right>mdi-alpha-a-box</v-icon>-->
+<!--        </v-btn>-->
       </v-btn-toggle>
 
       <!--   ==== gist based iterative drafting ===== -->
@@ -82,24 +82,24 @@
         >
         </textarea>
       </div>
-      <v-main
-          v-if="postAnalMode && !baseMode"
-          contenteditable="true"
-          style="
-            text-align: justify;
-            margin: 25px 20px 20px 20px;
-            text-justify: inter-word;
-          "
-      >
-        <v-textarea
-            ref="postInput"
-            id="post-anal-textarea"
-            v-model="postAnalText"
-            @click="selectPostText"
-            @input="inputPostText"
-        >
-        </v-textarea>
-      </v-main>
+<!--      <v-main-->
+<!--          v-if="postAnalMode && !baseMode"-->
+<!--          contenteditable="true"-->
+<!--          style="-->
+<!--            text-align: justify;-->
+<!--            margin: 25px 20px 20px 20px;-->
+<!--            text-justify: inter-word;-->
+<!--          "-->
+<!--      >-->
+<!--        <v-textarea-->
+<!--            ref="postInput"-->
+<!--            id="post-anal-textarea"-->
+<!--            v-model="postAnalText"-->
+<!--            @click="selectPostText"-->
+<!--            @input="inputPostText"-->
+<!--        >-->
+<!--        </v-textarea>-->
+<!--      </v-main>-->
 
       <!--      <v-btn fab dark-->
       <!--             absolute bottom left-->
