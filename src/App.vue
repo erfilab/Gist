@@ -1,24 +1,34 @@
 <template>
   <div>
     <v-app style="position: relative">
-      <v-btn-toggle
-          tile
-          group
-          style="margin: 0 auto;"
-      >
-        <v-btn @click="() => {this.baseMode = false; this.postAnalMode = false}">
+      <!-- <v-btn-toggle tile group style="margin: 0 auto">
+        <v-btn
+          @click="
+            () => {
+              this.baseMode = false;
+              this.postAnalMode = false;
+            }
+          "
+        >
           Iterative
           <v-icon right>mdi-alpha-i-box</v-icon>
         </v-btn>
-        <v-btn @click="() => {this.baseMode = true; this.postAnalMode = false}">
+        <v-btn
+          @click="
+            () => {
+              this.baseMode = true;
+              this.postAnalMode = false;
+            }
+          "
+        >
           Baseline
           <v-icon right>mdi-alpha-b-box</v-icon>
-        </v-btn>
-<!--        <v-btn @click="() => {this.baseMode = false; this.postAnalMode = true}">-->
-<!--          Analysis-->
-<!--          <v-icon right>mdi-alpha-a-box</v-icon>-->
-<!--        </v-btn>-->
-      </v-btn-toggle>
+        </v-btn> -->
+      <!--        <v-btn @click="() => {this.baseMode = false; this.postAnalMode = true}">-->
+      <!--          Analysis-->
+      <!--          <v-icon right>mdi-alpha-a-box</v-icon>-->
+      <!--        </v-btn>-->
+      <!-- </v-btn-toggle> -->
 
       <!--   ==== gist based iterative drafting ===== -->
       <!--      <v-touch v-if="!baseMode && !postAnalMode">-->
@@ -38,68 +48,69 @@
       <!--      </v-touch>-->
 
       <!--      ===== iterative drafting ===== -->
-      <div class="container"
-           v-if="!baseMode && !postAnalMode"
-           contenteditable="true"
-           style="
-            text-align: justify;
-            margin: 25px 20px 20px 20px;
-            text-justify: inter-word;
-          "
+      <div
+        class="container"
+        v-if="selectedTrialType === 'iterative'"
+        contenteditable="true"
+        style="
+          text-align: justify;
+          margin: 25px 20px 20px 20px;
+          text-justify: inter-word;
+        "
       >
         <div class="backdrop">
-          <div class="highlights" v-html="clonedIdText">
-          </div>
+          <div class="highlights" v-html="clonedIdText"></div>
         </div>
         <textarea
-            @click="select"
-            id="id-textarea"
-            v-model="idText"
-            ref="idInput"
-            inputmode='none'
-            @contextmenu="contextmenu"
+          @click="select"
+          id="id-textarea"
+          v-model="idText"
+          ref="idInput"
+          inputmode="none"
+          @contextmenu="contextmenu"
         >
         </textarea>
       </div>
 
       <!--   ===== baseline ===== -->
-      <div class="container"
-           v-if="baseMode && !postAnalMode"
-           contenteditable="true"
-           style="
-            text-align: justify;
-            margin: 25px 20px 20px 20px;
-            text-justify: inter-word;
-          "
+      <div
+        class="container"
+        v-if="selectedTrialType === 'baseline'"
+        contenteditable="true"
+        style="
+          text-align: justify;
+          margin: 25px 20px 20px 20px;
+          text-justify: inter-word;
+        "
       >
         <textarea
-            @click="select"
-            id="base-textarea"
-            v-model="baseText"
-            ref="baseInput"
-            inputmode='none'
-            @contextmenu="contextmenu"
+          @click="select"
+          id="base-textarea"
+          v-model="baseText"
+          ref="baseInput"
+          inputmode="none"
+          @contextmenu="contextmenu"
         >
         </textarea>
       </div>
-<!--      <v-main-->
-<!--          v-if="postAnalMode && !baseMode"-->
-<!--          contenteditable="true"-->
-<!--          style="-->
-<!--            text-align: justify;-->
-<!--            margin: 25px 20px 20px 20px;-->
-<!--            text-justify: inter-word;-->
-<!--          "-->
-<!--      >-->
-<!--        <v-textarea-->
-<!--            ref="postInput"-->
-<!--            id="post-anal-textarea"-->
-<!--            v-model="postAnalText"-->
-<!--            @click="selectPostText"-->
-<!--            @input="inputPostText"-->
-<!--        >-->
-<!--        </v-textarea>-->
-<!--      </v-main>-->
+      <!--      <v-main-->
+      <!--          v-if="postAnalMode && !baseMode"-->
+      <!--          contenteditable="true"-->
+      <!--          style="-->
+      <!--            text-align: justify;-->
+      <!--            margin: 25px 20px 20px 20px;-->
+      <!--            text-justify: inter-word;-->
+      <!--          "-->
+      <!--      >-->
+      <!--        <v-textarea-->
+      <!--            ref="postInput"-->
+      <!--            id="post-anal-textarea"-->
+      <!--            v-model="postAnalText"-->
+      <!--            @click="selectPostText"-->
+      <!--            @input="inputPostText"-->
+      <!--        >-->
+      <!--        </v-textarea>-->
+      <!--      </v-main>-->
 
       <!--      <v-btn fab dark-->
       <!--             absolute bottom left-->
@@ -119,40 +130,47 @@
       <!--        <v-icon>mdi-download</v-icon>-->
       <!--      </v-btn>-->
       <v-btn
-          v-if="!baseMode && !postAnalMode"
-          fab
-          color="warning"
-          absolute
-          bottom
-          left
-          style="position: fixed; bottom: 15px; left: 25px"
-
-          @click="deleteText"
+        v-if="selectedTrialType === 'iterative'"
+        fab
+        color="warning"
+        absolute
+        bottom
+        left
+        style="position: fixed; bottom: 15px; left: 25px"
+        @click="deleteText"
       >
         <v-icon>mdi-close</v-icon>
       </v-btn>
 
-      <v-btn fab dark
-             v-if="!baseMode && !postAnalMode"
-             absolute bottom left
-             style="position: fixed; bottom: 15px; left: 83px"
-             @click="deleteCurrentSelection"
+      <v-btn
+        fab
+        dark
+        v-if="selectedTrialType === 'iterative'"
+        absolute
+        bottom
+        left
+        style="position: fixed; bottom: 15px; left: 83px"
+        @click="deleteCurrentSelection"
       >
         <v-icon>mdi-backspace</v-icon>
       </v-btn>
 
-      <v-btn fab dark
-             absolute bottom right
-             :color="isStreaming ? 'green' : 'grey'"
-             style="position: fixed; bottom: 15px; right: 25px"
-             @click="isStreaming ? turnOffMic() : turnOnMic()"
+      <v-btn
+        fab
+        dark
+        absolute
+        bottom
+        right
+        :color="isStreaming ? 'green' : 'grey'"
+        style="position: fixed; bottom: 15px; right: 25px"
+        @click="isStreaming ? turnOffMic() : turnOnMic()"
       >
         <v-icon>mdi-microphone</v-icon>
       </v-btn>
 
       <span
-          id="to-modify-area"
-          style="
+        id="to-modify-area"
+        style="
           display: none;
           background-color: #c5e1a5;
           right: 0px;
@@ -161,11 +179,47 @@
       />
       <!-- <SwipeText /> -->
       <div
-          id="speaking_area"
-          style="display: none; width: 100%; font-size: large"
+        id="speaking_area"
+        style="display: none; width: 100%; font-size: large"
       ></div>
 
-      <hr id="speaking_area_lower" style="display: none; margin: 5px 0"/>
+      <hr id="speaking_area_lower" style="display: none; margin: 5px 0" />
+
+      <v-dialog v-model="dialog" persistent max-width="300px">
+        <v-card>
+          <v-card-title>
+            <span class="text-h5">Trial Info</span>
+          </v-card-title>
+          <v-card-text>
+            <v-container>
+              <v-row>
+                <v-col cols="12">
+                  <v-text-field
+                    v-model="trialName"
+                    label="Trial Name*"
+                    required
+                  ></v-text-field>
+                </v-col>
+                <v-col cols="12" sm="6">
+                  <v-select
+                    v-model="selectedTrialType"
+                    :items="['iterative', 'baseline', 'post-analysis']"
+                    label="Trial Type*"
+                    required
+                  ></v-select>
+                </v-col>
+              </v-row>
+            </v-container>
+            <small>*indicates required field</small>
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="blue darken-1" text @click="createNewTrial">
+              Save
+            </v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
     </v-app>
   </div>
 </template>
@@ -175,11 +229,11 @@
 // import SwipeText from "@/components/SwipeText";
 // import MyCursor from "@/components/MyCursor";
 
-import {io} from "socket.io-client";
-import {mapGetters} from "vuex";
-import {db} from '@/plugins/firebase.js';
-import {ref, set, get, push} from 'firebase/database';
-import {diffChars, diffWords} from 'diff'
+import { io } from "socket.io-client";
+import { mapGetters } from "vuex";
+import { db } from "@/plugins/firebase.js";
+import { ref, set, get, push } from "firebase/database";
+import { diffChars, diffWords } from "diff";
 
 const nowDay = new Date().toISOString().slice(0, 10);
 let socket = null;
@@ -211,15 +265,10 @@ export default {
     allCurrentTargets: [],
     allCurrentTargetText: "",
 
-    // trial information
-    trialName: null,
-
     //gesture
     lastTapTime: null,
 
-
     // post analysis mode
-    postAnalMode: false,
     postAnalText: "",
 
     // iterative drafting
@@ -229,8 +278,12 @@ export default {
     currentHighlightedText: "",
     prevSel: [],
 
+    // dialog prompt
+    dialog: true,
+    trialName: "",
+    selectedTrialType: "",
+
     // base mode
-    baseMode: false,
     baseText: "",
     previousBaseText: "",
 
@@ -241,7 +294,7 @@ export default {
     prevText: "",
 
     //post analysis
-    previousPostText: ""
+    previousPostText: "",
   }),
 
   components: {
@@ -267,32 +320,17 @@ export default {
       if (this.selectedNo >= 1) {
         if (this.selectedElements.length > 0) {
           this.changeLocationAndSpeak();
-          let selectedText = ""
-          this.selectedElements.map(ele => {
-            selectedText += ele.innerText.trim() + " "
-            ele.style.backgroundColor = '#c5e1a5'
-            ele.style.padding = '8px'
-            ele.style.margin = 0
-            ele.setAttribute(
-                "id",
-                `to-modify-area-${this.selectedNo}`
-            );
-            ele.addEventListener(
-                "touchstart",
-                this.handleTouchStart,
-                false
-            );
-            ele.addEventListener(
-                "touchmove",
-                this.handleTouchMove,
-                false
-            );
-            ele.addEventListener(
-                "touchend",
-                this.handleTouchEnd,
-                false
-            );
-          })
+          let selectedText = "";
+          this.selectedElements.map((ele) => {
+            selectedText += ele.innerText.trim() + " ";
+            ele.style.backgroundColor = "#c5e1a5";
+            ele.style.padding = "8px";
+            ele.style.margin = 0;
+            ele.setAttribute("id", `to-modify-area-${this.selectedNo}`);
+            ele.addEventListener("touchstart", this.handleTouchStart, false);
+            ele.addEventListener("touchmove", this.handleTouchMove, false);
+            ele.addEventListener("touchend", this.handleTouchEnd, false);
+          });
 
           // const to_modify_area = document.getElementById("to-modify-area");
           // let clone_modify_area = to_modify_area.cloneNode(true);
@@ -323,10 +361,7 @@ export default {
           //
           const speaking_area = document.getElementById("speaking_area");
           const cursorElement = document.getElementById("my_cursor");
-          cursorElement.parentNode.insertBefore(
-              speaking_area,
-              cursorElement
-          );
+          cursorElement.parentNode.insertBefore(speaking_area, cursorElement);
           speaking_area.style.removeProperty("display");
           //
           // clone_modify_area.style.display = "block";
@@ -336,10 +371,10 @@ export default {
           // );
           //
           await this.storeDataLog({
-            type: 'multi_select',
+            type: "multi_select",
             content: selectedText,
-            targetId: `to-modify-area-${this.selectedNo}`
-          })
+            targetId: `to-modify-area-${this.selectedNo}`,
+          });
           //
           // // remove selected blocks
           // this.selectedElements.forEach((i) => {
@@ -363,42 +398,98 @@ export default {
       }
     },
     voice2text_val() {
-      if (!this.baseMode) this.$store.commit("set_new_semantic_content", this.voice2text);
+      if (this.selectedTrialType !== "baseline")
+        this.$store.commit("set_new_semantic_content", this.voice2text);
     },
     interimResult() {
       // const inputElement = this.$refs.baseText.querySelector('input')
       // const inputElement = document.getElementById('base-textarea')
-
-    }
+    },
   },
 
   methods: {
+    async createNewTrial() {
+      this.dialog = false;
+      const trialRef = ref(
+        db,
+        `${this.selectedTrialType}-trials/` + this.trialName
+      );
+      socket.emit("joinRoom", this.trialName);
+      const createdTime = `${new Date().toLocaleDateString('en-US')}  ${new Date().toLocaleTimeString('en-US')}`
+
+      await get(trialRef)
+        .then(async (snapshot) => {
+          if (!snapshot.exists()) {
+            await set(trialRef, {
+              trialName: this.trialName,
+              createdAt: createdTime,
+              createdTimestamp: new Date().getTime(),
+            }).catch(console.error);
+          }
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+
+      if (this.selectedTrialType === "iterative") this.$refs.idInput.focus();
+      else if (this.selectedTrialType === "baseline")
+        this.$refs.baseInput.focus();
+      else this.$refs.postInput.focus();
+
+      window.onerror = async function (msg, url, line, col, error) {
+        await push(
+          ref(
+            db,
+            `${this.selectedTrialType}-trials/${this.trialName}/errorLogs`
+          ),
+          {
+            timestamp: new Date().getTime(),
+            errorMsg: msg,
+            errorUrl: url,
+            errorLine: line,
+            errorCol: col,
+            error: error,
+          }
+        );
+      };
+    },
     select(e) {
-      this.selectionEnd = e.target.selectionEnd
-      this.prevText = this[`${this.baseMode ? 'base' : 'id'}Text`].substring(this.selectionEnd + this.interimResult.length)
+      this.selectionEnd = e.target.selectionEnd;
+      this.prevText = this[
+        `${this.selectedTrialType === "baseline" ? "base" : "id"}Text`
+      ].substring(this.selectionEnd + this.interimResult.length);
       this.storeDataLog({
         type: `user_selection`,
         selectionEnd: this.selectionEnd,
-        prevTextFromSelectionEnd: this.prevText
-      })
+        prevTextFromSelectionEnd: this.prevText,
+      });
     },
     deleteText() {
-      this.clonedIdText = this.idText.replace(this.currentHighlightedText, '')
-      this.idText = this.clonedIdText
+      this.clonedIdText = this.idText.replace(this.currentHighlightedText, "");
+      this.idText = this.clonedIdText;
     },
     contextmenu(e) {
-      e.preventDefault()
+      e.preventDefault();
     },
     deleteCurrentSelection() {
-      const textarea = document.getElementById('id-textarea')
-      this.idText = this.idText.slice(0, textarea.selectionStart) + this.idText.slice(textarea.selectionEnd)
-      this.clonedIdText = this.idText
-      this.clonedIdText = this.idText.replace(this.currentHighlightedText, `<mark>${this.currentHighlightedText}</mark>`)
+      const textarea = document.getElementById("id-textarea");
+      this.idText =
+        this.idText.slice(0, textarea.selectionStart) +
+        this.idText.slice(textarea.selectionEnd);
+      this.clonedIdText = this.idText;
+      this.clonedIdText = this.idText.replace(
+        this.currentHighlightedText,
+        `<mark>${this.currentHighlightedText}</mark>`
+      );
 
-      this.selectionEnd = textarea.selectionStart
-      this.prevText = this.idText.substring(this.selectionEnd + this.interimResult.length)
-      textarea.focus()
-      this.$nextTick(() => textarea.setSelectionRange(this.selectionEnd, this.selectionEnd))
+      this.selectionEnd = textarea.selectionStart;
+      this.prevText = this.idText.substring(
+        this.selectionEnd + this.interimResult.length
+      );
+      textarea.focus();
+      this.$nextTick(() =>
+        textarea.setSelectionRange(this.selectionEnd, this.selectionEnd)
+      );
     },
     // inputText(e) {
     //   if (!this.isTranscribing) {
@@ -424,56 +515,62 @@ export default {
       this.storeDataLog({
         type: `user_selection`,
         selectionEnd: e.target.selectionEnd,
-        selectionStart: e.target.selectionStart
-      })
+        selectionStart: e.target.selectionStart,
+      });
     },
     inputPostText(e) {
-      const diffChar = diffChars(this.previousPostText, e)
-      const id = this.uuidv4()
-      diffChar.forEach(part => {
+      const diffChar = diffChars(this.previousPostText, e);
+      const id = this.uuidv4();
+      diffChar.forEach((part) => {
         this.storeDataLog({
-          type: 'inputDiff',
+          type: "inputDiff",
           index: id,
-          mode: part.added ? 'added' : part.removed ? 'removed' : 'no change',
-          text: part.value
-        })
-      })
-      this.previousPostText = e
+          mode: part.added ? "added" : part.removed ? "removed" : "no change",
+          text: part.value,
+        });
+      });
+      this.previousPostText = e;
     },
     async storeDataLog(payload) {
-      await push(ref(db, `${this.baseMode ? 'base-' : (this.postAnalMode ? 'post-' : 'id-')}trials/${this.trialName}/systemLogs`), {
-        timestamp: new Date().getTime(),
-        ...payload,
-      }).catch(console.error)
+      await push(
+        ref(
+          db,
+          `${this.selectedTrialType}-trials/${this.trialName}/systemLogs`
+        ),
+        {
+          timestamp: new Date().getTime(),
+          ...payload,
+        }
+      ).catch(console.error);
       // .then(res => this.currentChannel = {...this.currentChannel, dbKey: res.key})
     },
     // export the text to the clipboard
     async exportText() {
       let text = "";
-      if (this.baseMode) {
-        this.voice2text.forEach(v2t => {
-          text += v2t.trim()
-          text += " "
-        })
+      if (this.selectedTrialType === "baseline") {
+        this.voice2text.forEach((v2t) => {
+          text += v2t.trim();
+          text += " ";
+        });
       } else {
-        this.semanticList.forEach(block => {
-          text += block.text.trim()
-          text += " "
-        })
+        this.semanticList.forEach((block) => {
+          text += block.text.trim();
+          text += " ";
+        });
       }
       await navigator.clipboard.writeText(text.trim());
 
       await this.storeDataLog({
-        type: 'export',
-        content: text
-      })
+        type: "export",
+        content: text,
+      });
     },
     uuidv4() {
       return ([1e7] + -1e3 + -4e3 + -8e3 + -1e11).replace(/[018]/g, (c) =>
-          (
-              c ^
-              (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))
-          ).toString(16)
+        (
+          c ^
+          (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))
+        ).toString(16)
       );
     },
     changeLocationAndSpeak() {
@@ -487,8 +584,8 @@ export default {
     },
     async handleTouchStart(e) {
       // this.currentTarget = document.getElementById(e.target.id);
-      if ((e.target.getAttribute('id')).trim().startsWith('to-modify-area')) {
-        this.allCurrentTargets = document.querySelectorAll(`#${e.target.id}`)
+      if (e.target.getAttribute("id").trim().startsWith("to-modify-area")) {
+        this.allCurrentTargets = document.querySelectorAll(`#${e.target.id}`);
         const firstTouch = this.getTouches(e)[0];
         this.startX = firstTouch.clientX;
 
@@ -497,7 +594,8 @@ export default {
 
         // let selectedSpanElement = null
         // let insertedIndex = 0
-        const targetSibling = this.allCurrentTargets[this.allCurrentTargets.length - 1]
+        const targetSibling =
+          this.allCurrentTargets[this.allCurrentTargets.length - 1];
 
         // const selectedList = this.currentTarget.innerText
         //     .split(/(.*?[.,;?])/g)
@@ -552,22 +650,24 @@ export default {
         //     speaking_area,
         //     cursorElement.nextElementSibling
         // );
-        this.lastTapTime = new Date().getTime()
-
+        this.lastTapTime = new Date().getTime();
 
         timer = setTimeout(() => {
-          const canVibrate = window.navigator.vibrate
-          if (canVibrate) window.navigator.vibrate(100)
-        }, 480)
+          const canVibrate = window.navigator.vibrate;
+          if (canVibrate) window.navigator.vibrate(100);
+        }, 480);
 
-        this.allCurrentTargets.forEach(target => this.allCurrentTargetText += target.innerText.trim() + ' ')
+        this.allCurrentTargets.forEach(
+          (target) =>
+            (this.allCurrentTargetText += target.innerText.trim() + " ")
+        );
         await this.storeDataLog({
-          type: 'touch_green_block',
+          type: "touch_green_block",
           chunksLength: this.allCurrentTargets.length,
           followingElementIndex: targetSibling.dataset.index,
           followingElementText: targetSibling.innerText,
           content: this.allCurrentTargetText,
-        })
+        });
       }
     },
     handleTouchMove(e) {
@@ -577,14 +677,14 @@ export default {
       this.xDiff = this.startX - xUp;
       this.screenX = e.touches[0].screenX;
 
-      this.allCurrentTargets.forEach(target => {
+      this.allCurrentTargets.forEach((target) => {
         target.style.right = `${this.xDiff}px`;
         if (this.xDiff > 0) {
           target.style.backgroundColor = `rgb(${197 + this.xDiff}, ${
-              225 - this.xDiff
+            225 - this.xDiff
           }, ${165 - this.xDiff})`;
         }
-      })
+      });
     },
     async handleTouchEnd() {
       const now = new Date().getTime();
@@ -598,77 +698,84 @@ export default {
 
         let temp_semanticList = this.semanticList;
         const cursorElement = document.getElementById("my_cursor");
-        const speaking_area = document.getElementById('speaking_area')
-        speaking_area.style.display = 'none'
+        const speaking_area = document.getElementById("speaking_area");
+        speaking_area.style.display = "none";
         const targetSibling = document.querySelector(
-            `[data-index="${parseInt(this.allCurrentTargets[this.allCurrentTargets.length - 1].dataset.index) + 1}"]`
+          `[data-index="${
+            parseInt(
+              this.allCurrentTargets[this.allCurrentTargets.length - 1].dataset
+                .index
+            ) + 1
+          }"]`
         );
 
-        targetSibling.parentNode.insertBefore(
-            cursorElement,
-            targetSibling
-        );
+        targetSibling.parentNode.insertBefore(cursorElement, targetSibling);
 
         cursorElement.parentNode.insertBefore(
-            speaking_area,
-            cursorElement.nextElementSibling
+          speaking_area,
+          cursorElement.nextElementSibling
         );
 
-        this.allCurrentTargets.forEach(target => {
+        this.allCurrentTargets.forEach((target) => {
           temp_semanticList = temp_semanticList.filter((ele) => {
             // console.log(ele.text, target.innerText.trim(), ele.text.trim() === target.innerText.trim())
-            return ele.text.trim() !== target.innerText.trim()
-          })
-          if (target.previousElementSibling && target.previousElementSibling.tagName === 'HR') {
-            const speaking_area = document.getElementById('speaking_area_lower')
-            const inserted_target = document.getElementById('last-element')
-            speaking_area.style.display = 'none'
+            return ele.text.trim() !== target.innerText.trim();
+          });
+          if (
+            target.previousElementSibling &&
+            target.previousElementSibling.tagName === "HR"
+          ) {
+            const speaking_area = document.getElementById(
+              "speaking_area_lower"
+            );
+            const inserted_target = document.getElementById("last-element");
+            speaking_area.style.display = "none";
             inserted_target.parentNode.insertBefore(
-                speaking_area,
-                inserted_target
+              speaking_area,
+              inserted_target
             );
           }
-          target.parentNode.parentNode.removeChild(target.parentNode)
-        })
-        const insertedIndex = parseInt(this.allCurrentTargets[this.allCurrentTargets.length - 1].dataset.index) - this.allCurrentTargets.length + 1
+          target.parentNode.parentNode.removeChild(target.parentNode);
+        });
+        const insertedIndex =
+          parseInt(
+            this.allCurrentTargets[this.allCurrentTargets.length - 1].dataset
+              .index
+          ) -
+          this.allCurrentTargets.length +
+          1;
 
         await this.storeDataLog({
-          type: 'remove_text',
+          type: "remove_text",
           content: this.allCurrentTargetText,
           chunksLength: this.allCurrentTargets.length,
           nextInsertedIndex: insertedIndex,
           followingElementText: targetSibling.innerText,
-          currentContent: temp_semanticList
-        })
+          currentContent: temp_semanticList,
+        });
 
         await this.$store.commit("update_current_index", insertedIndex);
         this.$store.commit("update_current_target_block", targetSibling);
         await this.$store.commit("set_semanticList", temp_semanticList);
         this.$store.commit("clear_element");
       } else if (timeSince > 500) {
-        this.allCurrentTargets.forEach(target => {
-          target.style.backgroundColor = '#e0e0e0'
-          target.style.padding = '5px'
-          target.style.margin = '0 5px'
+        this.allCurrentTargets.forEach((target) => {
+          target.style.backgroundColor = "#e0e0e0";
+          target.style.padding = "5px";
+          target.style.margin = "0 5px";
           target.style.right = 0;
-          target.setAttribute('id', this.uuidv4())
+          target.setAttribute("id", this.uuidv4());
 
-          target.removeEventListener(
-              "touchstart",
-              this.handleTouchStart,
-              {passive: true}
-          );
-          target.removeEventListener(
-              "touchmove",
-              this.handleTouchMove,
-              {passive: true}
-          );
-          target.removeEventListener(
-              "touchend",
-              this.handleTouchEnd,
-              {passive: true}
-          );
-        })
+          target.removeEventListener("touchstart", this.handleTouchStart, {
+            passive: true,
+          });
+          target.removeEventListener("touchmove", this.handleTouchMove, {
+            passive: true,
+          });
+          target.removeEventListener("touchend", this.handleTouchEnd, {
+            passive: true,
+          });
+        });
 
         // const insertedList = this.currentTarget.innerText
         //     .split(/(.*?[.,;?])/g)
@@ -704,29 +811,34 @@ export default {
         //
         // this.currentTarget.parentNode.removeChild(this.currentTarget);
 
-        const insertedIndex = this.allCurrentTargets[this.allCurrentTargets.length - 1].dataset.index
-        await this.$store.commit("update_current_index", parseInt(insertedIndex) + 1);
+        const insertedIndex =
+          this.allCurrentTargets[this.allCurrentTargets.length - 1].dataset
+            .index;
+        await this.$store.commit(
+          "update_current_index",
+          parseInt(insertedIndex) + 1
+        );
         await this.storeDataLog({
-          type: 'remain_text',
+          type: "remain_text",
           content: this.allCurrentTargetText,
           chunksLength: this.allCurrentTargets.length,
           nextInsertedIndex: insertedIndex,
-        })
+        });
         // await this.$store.commit("set_semanticList", semantic_block);
         // console.log('insert: ', insertedIndex, this.semanticList)
         await this.$store.commit("clear_element");
       } else {
-        this.allCurrentTargets.forEach(target => {
+        this.allCurrentTargets.forEach((target) => {
           target.style.right = 0;
           target.style.backgroundColor = "rgb(197, 225, 165)";
-        })
+        });
       }
 
       this.startX = null;
       this.xDiff = 0;
       this.screenX = 9999;
       this.currentTarget = null;
-      if (timer) clearTimeout(timer)
+      if (timer) clearTimeout(timer);
     },
     // async deleteText() {
     //   let temp_semanticList = this.semanticList;
@@ -773,18 +885,19 @@ export default {
       this.formattedMessages = [];
       this.voice2text = null;
       this.$store.commit("clear_element");
-      if (!this.baseMode && !this.postAnalMode) this.$refs.idInput.focus()
-      else if (this.baseMode) this.$refs.baseInput.focus()
-      else this.$refs.postInput.focus()
+      if (this.selectedTrialType === "iterative") this.$refs.idInput.focus();
+      else if (this.selectedTrialType === "baseline")
+        this.$refs.baseInput.focus();
+      else this.$refs.postInput.focus();
 
       await this.storeDataLog({
-        type: 'microphone',
-        event: true
-      })
+        type: "microphone",
+        event: true,
+      });
 
       socket.emit("startRecording");
       audioContext = window.AudioContext || window.webkitAudioContext;
-      context = new audioContext({latencyHint: "interactive"});
+      context = new audioContext({ latencyHint: "interactive" });
       processor = context.createScriptProcessor(2048, 1, 1);
       processor.connect(context.destination);
       context.resume();
@@ -799,15 +912,15 @@ export default {
             return;
           }
           socket.emit(
-              "BINARY_DATA",
-              this.downsampleBuffer(e.inputBuffer.getChannelData(0), 44100, 16000)
+            "BINARY_DATA",
+            this.downsampleBuffer(e.inputBuffer.getChannelData(0), 44100, 16000)
           );
         };
       };
 
       navigator.mediaDevices
-          .getUserMedia({audio: true, video: false})
-          .then(handleSuccess);
+        .getUserMedia({ audio: true, video: false })
+        .then(handleSuccess);
     },
     turnOffMic() {
       this.isStreaming = false;
@@ -827,9 +940,9 @@ export default {
       });
 
       this.storeDataLog({
-        type: 'microphone',
-        event: false
-      })
+        type: "microphone",
+        event: false,
+      });
 
       this.voice2text = "";
       this.formattedMessages = [];
@@ -856,11 +969,11 @@ export default {
       while (offsetResult < result.length) {
         let nextOffsetBuffer = Math.round((offsetResult + 1) * sampleRateRatio);
         let accum = 0,
-            count = 0;
+          count = 0;
         for (
-            let i = offsetBuffer;
-            i < nextOffsetBuffer && i < buffer.length;
-            i++
+          let i = offsetBuffer;
+          i < nextOffsetBuffer && i < buffer.length;
+          i++
         ) {
           accum += buffer[i];
           count++;
@@ -874,7 +987,7 @@ export default {
     },
     getFinalResults() {
       return this.formattedMessages.filter(
-          (r) => r.results && r.results.length && r.results[0].isFinal
+        (r) => r.results && r.results.length && r.results[0].isFinal
       );
     },
 
@@ -894,16 +1007,16 @@ export default {
         final.push(interim);
       } else {
         const finalResults = this.messages
-            .map((msg) =>
-                msg.results.map((result) => result.alternatives[0].transcript)
-            )
-            .reduce((a, b) => a.concat(b), [])
+          .map((msg) =>
+            msg.results.map((result) => result.alternatives[0].transcript)
+          )
+          .reduce((a, b) => a.concat(b), []);
 
         this.storeDataLog({
           type: `final_transcript`,
           content: finalResults,
-          mode: this.selectedElements.length > 0 ? 'respeak' : 'insert'
-        })
+          mode: this.selectedElements.length > 0 ? "respeak" : "insert",
+        });
       }
       return final;
     },
@@ -914,169 +1027,178 @@ export default {
         window.document.exitFullscreen().catch(console.error);
       } else {
         window.document
-            .querySelector("#app")
-            .requestFullscreen({navigationUI: "hide"})
-            .catch(console.error);
+          .querySelector("#app")
+          .requestFullscreen({ navigationUI: "hide" })
+          .catch(console.error);
 
         this.isFullScreen = true;
       }
       this.storeDataLog({
-        type: 'fullscreen',
-        event: this.isFullScreen
-      })
+        type: "fullscreen",
+        event: this.isFullScreen,
+      });
     },
   },
   async created() {
     socket = io(
-        `${
-            process.env.NODE_ENV === "production"
-                ? "https://ryanyen2.tech/"
-                : "http://localhost:3000/"
-        }` + nowDay
+      `${
+        process.env.NODE_ENV === "production"
+          ? "https://ryanyen2.tech/"
+          : "http://localhost:3000/"
+      }` + nowDay
     );
 
     socket.on("TRANSCRIPT", async (data) => {
-      this.isTranscribing = true
-      if (!this.baseMode && !this.postAnalMode) {
+      this.isTranscribing = true;
+      if (this.selectedTrialType === "iterative") {
         this.interimResult = data.results[0].alternatives[0].transcript;
         this.isTransFinal = data.results[0].isFinal;
 
         // const textarea = this.$refs['input'].$el.querySelector('input:not([type=hidden]),textarea:not([type=hidden])')
-        const textarea = document.getElementById('id-textarea')
-        const selStart = textarea.selectionStart
-        const selEnd = textarea.selectionEnd
+        const textarea = document.getElementById("id-textarea");
+        const selStart = textarea.selectionStart;
+        const selEnd = textarea.selectionEnd;
 
         if (window.getSelection && selStart !== selEnd) {
-          const highlightText = this.idText.substring(selStart, selEnd)
+          const highlightText = this.idText.substring(selStart, selEnd);
           //user's selection
-          if (this.currentHighlightedText.length && highlightText.trim() !== this.currentHighlightedText.trim())
-            this.deleteText()
+          if (
+            this.currentHighlightedText.length &&
+            highlightText.trim() !== this.currentHighlightedText.trim()
+          )
+            this.deleteText();
 
           if (this.prevSel && this.prevSel[0] < selStart) {
             // const [prevSelStart, prevSelEnd] = this.prevSel
-            console.log(this.currentHighlightedText, highlightText, selEnd)
-            this.prevText = this.idText.substring(selEnd - this.currentHighlightedText.length)
-            this.selectionEnd = selEnd - this.currentHighlightedText.length
+            console.log(this.currentHighlightedText, highlightText, selEnd);
+            this.prevText = this.idText.substring(
+              selEnd - this.currentHighlightedText.length
+            );
+            this.selectionEnd = selEnd - this.currentHighlightedText.length;
           } else {
-            this.prevText = this.idText.substring(selEnd)
-            this.selectionEnd = selEnd
+            this.prevText = this.idText.substring(selEnd);
+            this.selectionEnd = selEnd;
           }
-          this.prevSel = [selStart, selEnd]
-          this.currentHighlightedText = highlightText
+          this.prevSel = [selStart, selEnd];
+          this.currentHighlightedText = highlightText;
         }
 
         this.idText =
-            this.idText.substring(0, this.selectionEnd) + ' ' + this.interimResult + ' '
-            + this.prevText
+          this.idText.substring(0, this.selectionEnd) +
+          " " +
+          this.interimResult +
+          " " +
+          this.prevText;
 
-        this.clonedIdText = this.idText.replace(this.currentHighlightedText, `<mark>${this.currentHighlightedText}</mark>`)
+        this.clonedIdText = this.idText.replace(
+          this.currentHighlightedText,
+          `<mark>${this.currentHighlightedText}</mark>`
+        );
 
         if (this.isTransFinal) {
-          this.isTranscribing = false
-          this.selectionEnd += (this.interimResult.length + 1)
+          this.isTranscribing = false;
+          this.selectionEnd += this.interimResult.length + 1;
           await this.storeDataLog({
             type: `final_transcript`,
-            content: this.interimResult
-          })
-          const diffWord = diffWords(this.previousIdText, this.idText)
-          const id = this.uuidv4()
-          diffWord.forEach(part => {
+            content: this.interimResult,
+          });
+          const diffWord = diffWords(this.previousIdText, this.idText);
+          const id = this.uuidv4();
+          diffWord.forEach((part) => {
             // console.log('speech diff: ', part.added ? 'added' : part.removed ? 'removed' : 'no change', part.value)
             this.storeDataLog({
-              type: 'speechInputDiff',
+              type: "speechInputDiff",
               index: id,
-              mode: part.added ? 'added' : part.removed ? 'removed' : 'no change',
-              text: part.value
-            })
-          })
-          this.previousIdText = this.idText
-          textarea.setSelectionRange(this.selectionEnd + 1, this.selectionEnd + 1)
+              mode: part.added
+                ? "added"
+                : part.removed
+                ? "removed"
+                : "no change",
+              text: part.value,
+            });
+          });
+          this.previousIdText = this.idText;
+          textarea.setSelectionRange(
+            this.selectionEnd + 1,
+            this.selectionEnd + 1
+          );
         } else {
-          this.$nextTick(() => textarea.setSelectionRange(this.selectionEnd + this.interimResult.length, this.selectionEnd + this.interimResult.length))
+          this.$nextTick(() =>
+            textarea.setSelectionRange(
+              this.selectionEnd + this.interimResult.length,
+              this.selectionEnd + this.interimResult.length
+            )
+          );
           // textarea.setSelectionRange(this.selectionEnd + this.interimResult.length, this.selectionEnd + this.interimResult.length)
         }
-        this.interimResult = ""
-      } else if (this.baseMode) {
+        this.interimResult = "";
+      } else if (this.selectedTrialType === "baseline") {
         this.interimResult = data.results[0].alternatives[0].transcript;
         this.isTransFinal = data.results[0].isFinal;
-        const textarea = document.getElementById('base-textarea')
-        const selStart = textarea.selectionStart
-        const selEnd = textarea.selectionEnd
+        const textarea = document.getElementById("base-textarea");
+        const selStart = textarea.selectionStart;
+        const selEnd = textarea.selectionEnd;
 
         if (window.getSelection && selStart !== selEnd) {
-          this.prevText = this.baseText.substring(selEnd)
-          this.selectionEnd = selStart
-          this.baseText =
-              this.baseText.substring(0, selStart) + this.prevText
+          this.prevText = this.baseText.substring(selEnd);
+          this.selectionEnd = selStart;
+          this.baseText = this.baseText.substring(0, selStart) + this.prevText;
         }
 
         this.baseText =
-            this.baseText.substring(0, this.selectionEnd) + ' ' + this.interimResult + ' '
-            + this.prevText
+          this.baseText.substring(0, this.selectionEnd) +
+          " " +
+          this.interimResult +
+          " " +
+          this.prevText;
 
         if (this.isTransFinal) {
-          this.isTranscribing = false
-          this.selectionEnd += (this.interimResult.length + 1)
+          this.isTranscribing = false;
+          this.selectionEnd += this.interimResult.length + 1;
           await this.storeDataLog({
             type: `final_transcript`,
-            content: this.interimResult
-          })
-          const diffWord = diffWords(this.previousBaseText, this.baseText)
-          const id = this.uuidv4()
-          diffWord.forEach(part => {
+            content: this.interimResult,
+          });
+          const diffWord = diffWords(this.previousBaseText, this.baseText);
+          const id = this.uuidv4();
+          diffWord.forEach((part) => {
             this.storeDataLog({
-              type: 'speechInputDiff',
+              type: "speechInputDiff",
               index: id,
-              mode: part.added ? 'added' : part.removed ? 'removed' : 'no change',
-              text: part.value
-            })
-          })
-          this.previousBaseText = this.baseText
-          textarea.setSelectionRange(this.selectionEnd + 1, this.selectionEnd + 1)
-        } else this.$nextTick(() => textarea.setSelectionRange(this.selectionEnd + this.interimResult.length, this.selectionEnd + this.interimResult.length))
-        this.interimResult = ""
+              mode: part.added
+                ? "added"
+                : part.removed
+                ? "removed"
+                : "no change",
+              text: part.value,
+            });
+          });
+          this.previousBaseText = this.baseText;
+          textarea.setSelectionRange(
+            this.selectionEnd + 1,
+            this.selectionEnd + 1
+          );
+        } else
+          this.$nextTick(() =>
+            textarea.setSelectionRange(
+              this.selectionEnd + this.interimResult.length,
+              this.selectionEnd + this.interimResult.length
+            )
+          );
+        this.interimResult = "";
       } else {
         this.formattedMessages = this.formattedMessages.concat(data);
         this.messages = this.getFinalAndLatestInterimResult();
         this.voice2text = this.messages
-            .map((msg) =>
-                msg.results.map((result) => result.alternatives[0].transcript)
-            )
-            .reduce((a, b) => a.concat(b), [])
+          .map((msg) =>
+            msg.results.map((result) => result.alternatives[0].transcript)
+          )
+          .reduce((a, b) => a.concat(b), []);
       }
-    });
-
-    this.trialName = `trial-${this.uuidv4()}`
-    const trialRef = ref(db, `${this.baseMode ? 'base-' : (this.postAnalMode ? 'post-' : 'id-')}trials/` + this.trialName)
-    socket.emit("joinRoom", this.trialName);
-
-    await get(trialRef).then(async (snapshot) => {
-      if (!snapshot.exists()) {
-        await set(trialRef, {
-          trialName: this.trialName,
-          createdAt: new Date().getTime(),
-        }).catch(console.error)
-      }
-    }).catch((error) => {
-      console.error(error);
     });
 
     await this.$store.commit("update_current_target_block", null);
     await this.$store.commit("update_current_index", 0);
-    if (!this.baseMode && !this.postAnalMode) this.$refs.idInput.focus()
-    else if (this.baseMode) this.$refs.baseInput.focus()
-    else this.$refs.postInput.focus()
-
-    window.onerror = async function (msg, url, line, col, error) {
-      await push(ref(db, `${this.baseMode ? 'base-' : (this.postAnalMode ? 'post-' : 'id-')}trials/${this.trialName}/errorLogs`), {
-        timestamp: new Date().getTime(),
-        errorMsg: msg,
-        errorUrl: url,
-        errorLine: line,
-        errorCol: col,
-        error: error
-      })
-    }
   },
   beforeUnmount() {
     socket.disconnect();
@@ -1089,7 +1211,8 @@ export default {
   overflow-y: auto;
 }
 
-#base-textarea, #id-textarea {
+#base-textarea,
+#id-textarea {
   height: 65vh;
   //margin-bottom: 15rem;
   background-color: transparent;
@@ -1105,7 +1228,7 @@ export default {
 }
 
 #post-anal-textarea {
-  height: 65vh
+  height: 65vh;
 }
 
 .backdrop {
@@ -1118,19 +1241,23 @@ export default {
 }
 
 .highlights {
-
   white-space: pre-wrap;
   word-wrap: break-word;
   color: transparent;
 }
 
-.container, .backdrop, #base-textarea, #id-textarea {
+.container,
+.backdrop,
+#base-textarea,
+#id-textarea {
   width: 360px;
 }
 
-.highlights, #base-textarea, #id-textarea {
+.highlights,
+#base-textarea,
+#id-textarea {
   padding: 10px;
-  font: 16px 'Open Sans', sans-serif;
+  font: 16px "Open Sans", sans-serif;
   letter-spacing: 0;
   text-align: justify;
 }
