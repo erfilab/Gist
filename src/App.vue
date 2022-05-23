@@ -48,49 +48,27 @@
       <!--      </v-touch>-->
 
       <!--      ===== iterative drafting ===== -->
-      <div
-        class="container"
-        v-if="selectedTrialType === 'iterative'"
-        contenteditable="true"
-        style="
+      <div class="container" v-if="selectedTrialType === 'iterative'" contenteditable="true" style="
           text-align: justify;
           margin: 25px 20px 20px 20px;
           text-justify: inter-word;
-        "
-      >
+        ">
         <div class="backdrop">
           <div class="highlights" v-html="clonedIdText"></div>
         </div>
-        <textarea
-          @click="select"
-          id="id-textarea"
-          v-model="idText"
-          ref="idInput"
-          inputmode="none"
-          @contextmenu="contextmenu"
-        >
+        <textarea @click="select" id="id-textarea" v-model="idText" ref="idInput" inputmode="none"
+          @contextmenu="contextmenu">
         </textarea>
       </div>
 
       <!--   ===== baseline ===== -->
-      <div
-        class="container"
-        v-if="selectedTrialType === 'baseline'"
-        contenteditable="true"
-        style="
+      <div class="container" v-if="selectedTrialType === 'baseline'" contenteditable="true" style="
           text-align: justify;
           margin: 25px 20px 20px 20px;
           text-justify: inter-word;
-        "
-      >
-        <textarea
-          @click="select"
-          id="base-textarea"
-          v-model="baseText"
-          ref="baseInput"
-          inputmode="none"
-          @contextmenu="contextmenu"
-        >
+        ">
+        <textarea @click="select" id="base-textarea" v-model="baseText" ref="baseInput" inputmode="none"
+          @contextmenu="contextmenu">
         </textarea>
       </div>
       <!--      <v-main-->
@@ -129,63 +107,34 @@
       <!--      >-->
       <!--        <v-icon>mdi-download</v-icon>-->
       <!--      </v-btn>-->
-      <v-btn
-        v-if="selectedTrialType === 'iterative'"
-        fab
-        color="warning"
-        absolute
-        bottom
-        left
-        style="position: fixed; bottom: 15px; left: 25px"
-        @click="deleteText"
-      >
+      <v-btn v-if="selectedTrialType === 'iterative'" color="warning" absolute top right
+        style="position: fixed; top: 15px; right: 25px" @click="deleteText" tile x-small>
         <v-icon>mdi-close</v-icon>
+        End Trial
       </v-btn>
 
-      <v-btn
-        fab
-        dark
-        v-if="selectedTrialType === 'iterative'"
-        absolute
-        bottom
-        left
-        style="position: fixed; bottom: 15px; left: 83px"
-        @click="deleteCurrentSelection"
-      >
+      <v-btn fab dark v-if="selectedTrialType === 'iterative'" absolute bottom right
+        style="position: fixed; bottom: 15px; right: 25px" @click="deleteCurrentSelection">
         <v-icon>mdi-backspace</v-icon>
       </v-btn>
 
-      <v-btn
-        fab
-        dark
-        absolute
-        bottom
-        right
-        :color="isStreaming ? 'green' : 'grey'"
-        style="position: fixed; bottom: 15px; right: 25px"
-        @click="isStreaming ? turnOffMic() : turnOnMic()"
-      >
+      <v-btn fab dark absolute bottom left style="position: fixed; bottom: 15px; left: 25px"
+        :color="isStreaming ? 'green' : 'grey'" @click="isStreaming ? turnOffMic() : turnOnMic()">
         <v-icon>mdi-microphone</v-icon>
       </v-btn>
 
-      <span
-        id="to-modify-area"
-        style="
+      <span id="to-modify-area" style="
           display: none;
           background-color: #c5e1a5;
           right: 0px;
           position: relative;
-        "
-      />
+        " />
       <!-- <SwipeText /> -->
-      <div
-        id="speaking_area"
-        style="display: none; width: 100%; font-size: large"
-      ></div>
+      <div id="speaking_area" style="display: none; width: 100%; font-size: large"></div>
 
       <hr id="speaking_area_lower" style="display: none; margin: 5px 0" />
 
-      <v-dialog v-model="dialog" persistent max-width="300px">
+      <v-dialog v-model="dialog" persistent max-width="100%">
         <v-card>
           <v-card-title>
             <span class="text-h5">Trial Info</span>
@@ -193,21 +142,11 @@
           <v-card-text>
             <v-container>
               <v-row>
-                <v-col cols="12">
-                  <v-text-field
-                    v-model="trialName"
-                    label="Trial Name*"
-                    required
-                  ></v-text-field>
-                </v-col>
-                <v-col cols="12" sm="6">
-                  <v-select
-                    v-model="selectedTrialType"
-                    :items="['iterative', 'baseline', 'post-analysis']"
-                    label="Trial Type*"
-                    required
-                  ></v-select>
-                </v-col>
+                <v-text-field v-model="trialName" label="Trial Name*" required></v-text-field>
+              </v-row>
+              <v-row>
+                <v-select v-model="selectedTrialType" :items="['iterative', 'baseline', 'post-analysis']"
+                  label="Trial Type*" required></v-select>
               </v-row>
             </v-container>
             <small>*indicates required field</small>
@@ -415,7 +354,9 @@ export default {
         `${this.selectedTrialType}-trials/` + this.trialName
       );
       socket.emit("joinRoom", this.trialName);
-      const createdTime = `${new Date().toLocaleDateString('en-US')}  ${new Date().toLocaleTimeString('en-US')}`
+      const createdTime = `${new Date().toLocaleDateString(
+        "en-US"
+      )}  ${new Date().toLocaleTimeString("en-US")}`;
 
       await get(trialRef)
         .then(async (snapshot) => {
@@ -458,11 +399,6 @@ export default {
       this.prevText = this[
         `${this.selectedTrialType === "baseline" ? "base" : "id"}Text`
       ].substring(this.selectionEnd + this.interimResult.length);
-      this.storeDataLog({
-        type: `user_selection`,
-        selectionEnd: this.selectionEnd,
-        prevTextFromSelectionEnd: this.prevText,
-      });
     },
     deleteText() {
       this.clonedIdText = this.idText.replace(this.currentHighlightedText, "");
@@ -680,9 +616,8 @@ export default {
       this.allCurrentTargets.forEach((target) => {
         target.style.right = `${this.xDiff}px`;
         if (this.xDiff > 0) {
-          target.style.backgroundColor = `rgb(${197 + this.xDiff}, ${
-            225 - this.xDiff
-          }, ${165 - this.xDiff})`;
+          target.style.backgroundColor = `rgb(${197 + this.xDiff}, ${225 - this.xDiff
+            }, ${165 - this.xDiff})`;
         }
       });
     },
@@ -701,11 +636,10 @@ export default {
         const speaking_area = document.getElementById("speaking_area");
         speaking_area.style.display = "none";
         const targetSibling = document.querySelector(
-          `[data-index="${
-            parseInt(
-              this.allCurrentTargets[this.allCurrentTargets.length - 1].dataset
-                .index
-            ) + 1
+          `[data-index="${parseInt(
+            this.allCurrentTargets[this.allCurrentTargets.length - 1].dataset
+              .index
+          ) + 1
           }"]`
         );
 
@@ -1041,10 +975,9 @@ export default {
   },
   async created() {
     socket = io(
-      `${
-        process.env.NODE_ENV === "production"
-          ? "https://ryanyen2.tech/"
-          : "http://localhost:3000/"
+      `${process.env.NODE_ENV === "production"
+        ? "https://ryanyen2.tech/"
+        : "http://localhost:3000/"
       }` + nowDay
     );
 
@@ -1070,7 +1003,7 @@ export default {
 
           if (this.prevSel && this.prevSel[0] < selStart) {
             // const [prevSelStart, prevSelEnd] = this.prevSel
-            console.log(this.currentHighlightedText, highlightText, selEnd);
+            // console.log(this.currentHighlightedText, highlightText, selEnd);
             this.prevText = this.idText.substring(
               selEnd - this.currentHighlightedText.length
             );
@@ -1081,6 +1014,11 @@ export default {
           }
           this.prevSel = [selStart, selEnd];
           this.currentHighlightedText = highlightText;
+          this.storeDataLog({
+            type: `text_selection`,
+            currentSelection: this.currentHighlightedText,
+            prevTextFromSelectionEnd: this.prevSel,
+          });
         }
 
         this.idText =
@@ -1106,16 +1044,14 @@ export default {
           const id = this.uuidv4();
           diffWord.forEach((part) => {
             // console.log('speech diff: ', part.added ? 'added' : part.removed ? 'removed' : 'no change', part.value)
-            this.storeDataLog({
-              type: "speechInputDiff",
-              index: id,
-              mode: part.added
-                ? "added"
-                : part.removed
-                ? "removed"
-                : "no change",
-              text: part.value,
-            });
+            if (part.added || part.removed) {
+              this.storeDataLog({
+                type: "speechInputDiff",
+                index: id,
+                mode: part.added ? "added" : "removed",
+                text: part.value,
+              });
+            }
           });
           this.previousIdText = this.idText;
           textarea.setSelectionRange(
@@ -1168,8 +1104,8 @@ export default {
               mode: part.added
                 ? "added"
                 : part.removed
-                ? "removed"
-                : "no change",
+                  ? "removed"
+                  : "no change",
               text: part.value,
             });
           });
@@ -1207,6 +1143,10 @@ export default {
 </script>
 
 <style lang="scss">
+.v-input {
+  max-width: 80% !important;
+}
+
 #app {
   overflow-y: auto;
 }
