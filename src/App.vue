@@ -1076,6 +1076,11 @@ export default {
         const selEnd = textarea.selectionEnd;
 
         if (window.getSelection && selStart !== selEnd) {
+          this.storeDataLog({
+            type: `text_selection`,
+            currentSelection: this.baseText.substring(selStart, selEnd),
+            selection: [selStart, selEnd],
+          });
           this.prevText = this.baseText.substring(selEnd);
           this.selectionEnd = selStart;
           this.baseText = this.baseText.substring(0, selStart) + this.prevText;
@@ -1098,16 +1103,14 @@ export default {
           const diffWord = diffWords(this.previousBaseText, this.baseText);
           const id = this.uuidv4();
           diffWord.forEach((part) => {
-            this.storeDataLog({
-              type: "speechInputDiff",
-              index: id,
-              mode: part.added
-                ? "added"
-                : part.removed
-                  ? "removed"
-                  : "no change",
-              text: part.value,
-            });
+            if (part.added || part.removed) {
+              this.storeDataLog({
+                type: "speechInputDiff",
+                index: id,
+                mode: part.added ? "added" : "removed",
+                text: part.value,
+              });
+            }
           });
           this.previousBaseText = this.baseText;
           textarea.setSelectionRange(
