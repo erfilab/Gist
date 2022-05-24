@@ -12,11 +12,11 @@ const app = initializeApp({
     apiKey: process.env.VUE_APP_FB_API_KEY,
     authDomain: process.env.VUE_APP_FB_AUTH_DOMAIN,
     projectId: process.env.VUE_APP_FB_PROJECT_ID,
-    storageBucket: "gist-dc9f5.appspot.com",
-    messagingSenderId: "845519359695",
+    storageBucket: "rare-tape-320513.appspot.com",
+    messagingSenderId: "968018019740",
     appId: process.env.VUE_APP_FB_APP_ID,
     measurementId: process.env.VUE_APP_FB_MEASURE_ID,
-    databaseURL: "https://gist-dc9f5-default-rtdb.asia-southeast1.firebasedatabase.app"
+    databaseURL: "https://rare-tape-320513-default-rtdb.asia-southeast1.firebasedatabase.app"
 });
 export const analytics = getAnalytics(app);
 export const firestore = getFirestore(app)

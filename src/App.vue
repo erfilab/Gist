@@ -407,7 +407,7 @@ export default {
     contextmenu(e) {
       e.preventDefault();
     },
-    deleteCurrentSelection() {
+    async deleteCurrentSelection() {
       const textarea = document.getElementById("id-textarea");
       this.idText =
         this.idText.slice(0, textarea.selectionStart) +
@@ -426,6 +426,11 @@ export default {
       this.$nextTick(() =>
         textarea.setSelectionRange(this.selectionEnd, this.selectionEnd)
       );
+      await this.storeDataLog({
+        type: `delete_selection`,
+        currentSelection: this.currentHighlightedText,
+        selectionEnd: this.selectionEnd,
+      });
     },
     // inputText(e) {
     //   if (!this.isTranscribing) {
@@ -1042,16 +1047,20 @@ export default {
           });
           const diffWord = diffWords(this.previousIdText, this.idText);
           const id = this.uuidv4();
+          let wordDiffChanges = []
           diffWord.forEach((part) => {
             // console.log('speech diff: ', part.added ? 'added' : part.removed ? 'removed' : 'no change', part.value)
             if (part.added || part.removed) {
-              this.storeDataLog({
-                type: "speechInputDiff",
-                index: id,
-                mode: part.added ? "added" : "removed",
-                text: part.value,
-              });
+              wordDiffChanges.push({
+                id: id,
+                type: part.added ? 'added' : 'removed',
+                value: part.value,
+              })
             }
+          });
+          this.storeDataLog({
+            type: `word_diff`,
+            content: wordDiffChanges,
           });
           this.previousIdText = this.idText;
           textarea.setSelectionRange(
@@ -1102,16 +1111,22 @@ export default {
           });
           const diffWord = diffWords(this.previousBaseText, this.baseText);
           const id = this.uuidv4();
+          let wordDiffChanges = []
           diffWord.forEach((part) => {
+            // console.log('speech diff: ', part.added ? 'added' : part.removed ? 'removed' : 'no change', part.value)
             if (part.added || part.removed) {
-              this.storeDataLog({
-                type: "speechInputDiff",
-                index: id,
-                mode: part.added ? "added" : "removed",
-                text: part.value,
-              });
+              wordDiffChanges.push({
+                id: id,
+                type: part.added ? 'added' : 'removed',
+                value: part.value,
+              })
             }
           });
+          this.storeDataLog({
+            type: `word_diff`,
+            content: wordDiffChanges,
+          });
+
           this.previousBaseText = this.baseText;
           textarea.setSelectionRange(
             this.selectionEnd + 1,
