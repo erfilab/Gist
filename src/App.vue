@@ -107,14 +107,14 @@
       <!--      >-->
       <!--        <v-icon>mdi-download</v-icon>-->
       <!--      </v-btn>-->
-      <v-btn v-if="selectedTrialType === 'iterative'" color="warning" absolute top right
-        style="position: fixed; top: 15px; right: 25px" @click="deleteText" tile x-small>
+      <v-btn color="warning" absolute top right style="position: fixed; top: 15px; right: 25px"
+        @click="deleteText(true)" tile x-small>
         <v-icon>mdi-close</v-icon>
         End Trial
       </v-btn>
 
-      <v-btn fab dark v-if="selectedTrialType === 'iterative'" absolute bottom right
-        style="position: fixed; bottom: 15px; right: 25px" @click="deleteCurrentSelection">
+      <v-btn fab dark absolute bottom right style="position: fixed; bottom: 15px; right: 25px"
+        @click="deleteCurrentSelection">
         <v-icon>mdi-backspace</v-icon>
       </v-btn>
 
@@ -400,37 +400,72 @@ export default {
         `${this.selectedTrialType === "baseline" ? "base" : "id"}Text`
       ].substring(this.selectionEnd + this.interimResult.length);
     },
-    deleteText() {
-      this.clonedIdText = this.idText.replace(this.currentHighlightedText, "");
-      this.idText = this.clonedIdText;
+    async deleteText(manual) {
+      if (this.selectedTrialType === 'iterative') {
+        this.clonedIdText = this.idText.replace(this.currentHighlightedText, "");
+        this.idText = this.clonedIdText;
+
+        await this.storeDataLog({
+          type: "delete",
+          content: this.idText
+        });
+
+        if (manual) {
+          await this.storeDataLog({
+          type: "endTrial",
+          content: this.idText
+        });
+        }
+      } else if (this.selectedTrialType === 'baseline') {
+        await this.storeDataLog({
+          type: "endTrial",
+          content: this.baseText
+        });
+      }
     },
     contextmenu(e) {
       e.preventDefault();
     },
     async deleteCurrentSelection() {
-      const textarea = document.getElementById("id-textarea");
-      this.idText =
-        this.idText.slice(0, textarea.selectionStart) +
-        this.idText.slice(textarea.selectionEnd);
-      this.clonedIdText = this.idText;
-      this.clonedIdText = this.idText.replace(
-        this.currentHighlightedText,
-        `<mark>${this.currentHighlightedText}</mark>`
-      );
+      if (this.selectedTrialType === 'iterative') {
+        const textarea = document.getElementById("id-textarea");
+        this.idText =
+          this.idText.slice(0, textarea.selectionStart) +
+          this.idText.slice(textarea.selectionEnd);
+        this.clonedIdText = this.idText;
+        this.clonedIdText = this.idText.replace(
+          this.currentHighlightedText,
+          `<mark>${this.currentHighlightedText}</mark>`
+        );
 
-      this.selectionEnd = textarea.selectionStart;
-      this.prevText = this.idText.substring(
-        this.selectionEnd + this.interimResult.length
-      );
-      textarea.focus();
-      this.$nextTick(() =>
-        textarea.setSelectionRange(this.selectionEnd, this.selectionEnd)
-      );
-      await this.storeDataLog({
-        type: `delete_selection`,
-        currentSelection: this.currentHighlightedText,
-        selectionEnd: this.selectionEnd,
-      });
+        this.selectionEnd = textarea.selectionStart;
+        this.prevText = this.idText.substring(
+          this.selectionEnd + this.interimResult.length
+        );
+        textarea.focus();
+        this.$nextTick(() =>
+          textarea.setSelectionRange(this.selectionEnd, this.selectionEnd)
+        );
+        await this.storeDataLog({
+          type: `delete_selection`,
+          currentSelection: this.currentHighlightedText,
+          selectionEnd: this.selectionEnd
+        });
+      } else {
+        const textarea = document.getElementById("base-textarea");
+        await this.storeDataLog({
+          type: `delete_selection`,
+          currentSelection: this.baseText.substring(textarea.selectionStart, textarea.selectionEnd),
+          selectionEnd: textarea.selectionEnd,
+        });
+        this.baseText = this.baseText.slice(0, textarea.selectionStart) + this.baseText.slice(textarea.selectionEnd)
+        this.prevText = this.baseText.substring(textarea.selectionStart);
+        this.selectionEnd = textarea.selectionStart
+        textarea.focus();
+        this.$nextTick(() =>
+          textarea.setSelectionRange(this.selectionEnd, this.selectionEnd)
+        );
+      }
     },
     // inputText(e) {
     //   if (!this.isTranscribing) {
@@ -1004,7 +1039,7 @@ export default {
             this.currentHighlightedText.length &&
             highlightText.trim() !== this.currentHighlightedText.trim()
           )
-            this.deleteText();
+            this.deleteText(false);
 
           if (this.prevSel && this.prevSel[0] < selStart) {
             // const [prevSelStart, prevSelEnd] = this.prevSel
